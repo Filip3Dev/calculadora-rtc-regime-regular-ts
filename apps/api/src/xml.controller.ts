@@ -2,7 +2,8 @@
  * XML — validação de documentos contra os XSDs oficiais (SEFAZ) via xmllint.
  * A geração de XML (ROC → DF-e) ainda não foi portada (leiautes JAXB extensos).
  */
-import { BadRequestException, Body, Controller, Get, HttpCode, Post, Query } from "@nestjs/common";
+import { BadRequestException, Body, Controller, Get, Header, HttpCode, Post, Query } from "@nestjs/common";
+import { gerarXml, TIPOS_GERACAO } from "@rtc/core";
 import { ApiOperation, ApiTags } from "@nestjs/swagger";
 import {spawnSync} from "node:child_process";
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -63,15 +64,28 @@ export class XmlController {
     }
   }
 
+  /** POST /api/calculadora/xml/generate?tipo=nfe — body: ROC (saída do regime-geral). */
+  @Post("generate")
+  @HttpCode(200)
+  @Header("content-type", "application/xml")
+  @ApiOperation({ summary: "Gera o XML do grupo de tributação RTC (infNFe parcial) a partir do ROC" })
+  gerar(@Query("tipo") tipo: string, @Body() roc: Record<string, unknown>): string {
+    if (!TIPOS_GERACAO.includes(tipo as never)) {
+      throw new BadRequestException(`Tipo '${tipo}' não suportado para geração. Use um de: ${TIPOS_GERACAO.join(", ")}`);
+    }
+    try {
+      return gerarXml(roc, tipo as "nfe" | "nfce");
+    } catch (e) {
+      throw new BadRequestException((e as Error).message);
+    }
+  }
+
   @Get("generate")
-  @ApiOperation({ summary: "Situação da geração de XML a partir do ROC" })
+  @ApiOperation({ summary: "Tipos de documento suportados na geração e na validação" })
   geracaoStatus() {
     return {
-      suportado: false,
-      mensagem:
-        "A geração de XML (ROC → DF-e) ainda não foi portada para TypeScript. " +
-        "A validação contra os XSDs oficiais está disponível em POST /api/calculadora/xml/validate.",
-      tiposPlanejados: TIPOS,
+      geracao: TIPOS_GERACAO.map((t) => ({ tipo: t, root: "infNFe" })),
+      validacao: TIPOS.map((t) => ({ tipo: t, subtipos: ["grupo", "nota"] })),
     };
   }
 }

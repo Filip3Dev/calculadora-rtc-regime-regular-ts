@@ -31,6 +31,11 @@ Todos os caminhos começam com `http://localhost:8080/api/calculadora`. A lista 
 | Descrição de um código de erro da observabilidade | `GET /observabilidade/erros?codigo=REG-011` |
 | Base de cálculo unificada (NF-e/NFC-e, transição 2026–2033) | `POST /base-calculo/base-calculo-unificada` |
 | Validação de XML (grupo ou nota) contra o XSD oficial (NF-e, NFC-e, NFS-e, CT-e, CT-e Simplificado, BP-e, BP-e TM, NF3-e) | `POST /xml/validate?tipo=nfe&subtipo=grupo` |
+| Geração do XML do grupo de tributação RTC a partir do ROC (NF-e, NFC-e, CT-e, CT-e Simplificado, BP-e, BP-e TM, NF3-e) | `POST /xml/generate?tipo=nfe` |
+| Base de cálculo de CBS e IBS em NFS-e | `POST /nfse/base-calculo` |
+| Bases unificadas RG e SN da NFS-e (MEI, locação 99.03, salão/profissional parceiro, documentos de ajuste) | `POST /base-calculo/base-calculo-unificada-nfse` |
+| Indicadores de operação da NFS-e (validação, locais, situações por NBS) | `GET/POST /nfse/indicador-operacao`, `/nfse/local-operacao`, `/nfse/locais-fornecimento` |
+| Cálculo de CBS/IBS em pedágio (distribuição por praça proporcional à extensão) | `POST /pedagio` |
 | CST e classificações tributárias (cClassTrib) | `GET /dados-abertos/situacoes-tributarias/cbs-ibs`, `GET /dados-abertos/classificacoes-tributarias` |
 | Fundamentações legais | `GET /dados-abertos/fundamentacoes-legais` |
 | NCM e NBS (consulta por prefixo, paginada) | `GET /dados-abertos/ncm`, `GET /dados-abertos/nbs` |
@@ -203,10 +208,11 @@ Resposta (alíquotas de referência 2026: CBS 0,9% · IBS-UF 0,1% · IBS-Municí
 |---|---|
 | Motor CBS/IBS/IS (expressões do banco, monofasia, desoneração/suspensão, diferimento, compra governamental 2027+, base unificada 2026–2033) | ✅ paridade golden |
 | Observabilidade (estado por item, catálogo REG/CAL, ProblemDetail RFC 9457) | ✅ |
-| Dados abertos essenciais (UFs, municípios, cClassTrib, CST, NCM/NBS, alíquotas de referência, fundamentações) | ✅ |
+| Dados abertos (UFs, municípios, cClassTrib por CST, CST, NCM/NBS, alíquotas de referência, fundamentações, redutores, transferências, unidades) | ✅ |
+| NFS-e (base legada, bases unificadas MEI/locação/salão, indicadores de operação, locais) | ✅ |
+| Pedágio (CBS/IBS por praça, proporcional à extensão) | ✅ |
 | Validação XML contra XSDs SEFAZ (8 tipos, anti-XXE) | ✅ |
-| Geração de XML (ROC → DF-e) | ⛔ não portada nesta versão (leiautes JAXB extensos) |
-| NFS-e (algoritmo próprio) e pedágio | ⛔ não portados nesta versão |
+| Geração do XML do grupo RTC a partir do ROC (7 tipos geráveis; NFS-e é validação-only, como no original) | ✅ valida contra os grupo.xsd oficiais |
 
 ---
 

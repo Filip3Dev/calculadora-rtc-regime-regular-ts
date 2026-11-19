@@ -1,0 +1,13 @@
+# Evita arrastar estado do host para a imagem (binários macOS de better-sqlite3,
+# caches) e mantém o contexto de build enxuto. db/sql e db/xsd FICAM no contexto.
+**/node_modules
+**/dist
+.git
+.wrangler
+db/*.db
+db/*.db-journal
+docs
+*.md
+# O app do playground não entra na imagem — só o package.json (workspace pnpm)
+apps/playground/**
+!apps/playground/package.json

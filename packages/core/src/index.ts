@@ -292,4 +292,6 @@ export type {
   NfseBaseCalculoInput,
 } from "./services/nfse.js";
 export type { PedagioInput } from "./services/pedagio.js";
+export { gerarXml, TIPOS_GERACAO, ErroGeracaoXml } from "./xml/dfe.js";
+export type { TipoGeracao } from "./xml/dfe.js";
 export { objetoJson } from "./serialize.js";
