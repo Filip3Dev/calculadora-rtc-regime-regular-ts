@@ -53,7 +53,7 @@ import {
   type BaseCalculoCibsInput,
   type BaseCalculoISMercadoriasInput,
 } from "./services/basecalculo-mercadorias.js";
-import { parseComponentes, parseOperacao } from "./validation.js";
+import { parseComponentes, parseOperacao, validarOperacaoRequest } from "./validation.js";
 import { ErroGenericoValidacaoException } from "./errors.js";
 import { objetoJson, serializarOper, serializarROC, totaisJson } from "./serialize.js";
 import type { OperacaoJson } from "./model/types.js";
@@ -296,6 +296,8 @@ export * from "./model/jbd.js";
 export * from "./errors.js";
 export type { OperacaoJson, ItemOperacaoJson } from "./model/types.js";
 export { CATALOGO_ERROS } from "./errors.js";
+export { validarItem, validarOperacaoCamposGlobais, validarOperacaoRequest } from "./validation.js";
+export { parseOperacao } from "./validation.js";
 export {
   LOCAIS_FORNECIMENTO,
   LOCAIS_INCIDENCIA,

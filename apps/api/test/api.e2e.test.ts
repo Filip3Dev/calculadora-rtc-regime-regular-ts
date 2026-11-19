@@ -68,7 +68,7 @@ describe.skipIf(!dbOk)("API e2e", () => {
         itens: [{ ...INPUT_OK.itens[0], ncm: "00000000" }],
       }),
     });
-    expect(res.status).toBe(422);
+    expect(res.status).toBe(404); // PARITY: EntidadeNaoEncontradaException → 404 (como o original)
     const body = await res.json();
     expect(body.codigo).toBe("REG-002");
     expect(body.detail).toContain("NCM de código 00000000 não encontrada");

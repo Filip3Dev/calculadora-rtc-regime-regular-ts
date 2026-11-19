@@ -2,6 +2,29 @@
 
 Notáveis mudanças deste projeto serão documentadas aqui. O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e o versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
+## [0.4.0] — 2026-11-19
+
+### Adicionado
+
+- **Teste diferencial ao vivo** (`scripts/diferencial.mts`): dispara os fixtures
+  oficiais contra a API Java (Docker, porta 8081) e a TS (8080) e compara —
+  **83/83 idênticos**: regime-geral e observabilidade campo a campo (incluindo
+  memoriaCalculo), 25 casos de erro (status + detail) e XML dos 7 tipos de DF-e
+  **byte a byte**. Encontrou e corrigiu 5 divergências reais:
+  - Indentação do XML: JAXB usa **4 espaços** (não 2) e termina com quebra de linha
+  - Hierarquia de status HTTP portada fielmente: família "não encontrada" → **404**,
+    CampoInvalido (inclui DataFatoGerador) → **400**, ErroFaltaImplementacao → **422**
+  - Bean Validation pré-cálculo no fail-fast: 400 com o formato exato do original
+    ("Um ou mais campos são inválidos - [itens[0].cClassTrib: size must be between 6 and 6]")
+  - DataFatoGeradorNaoInformada lançava erro genérico 500 em vez de REG-021/400
+- **Playground — Assistente**: formulário guiado com autocompletes alimentados pelos
+  dados abertos (NCM/NBS por código **ou descrição**, cClassTrib, CST, UFs e
+  municípios), suporte a compra governamental, Imposto Seletivo, alíquotas
+  nominais e desoneração; conversão bidirecional com o modo JSON
+- **Playground — aba XML**: gera o XML do grupo RTC do resultado calculado para
+  qualquer um dos 7 tipos de DF-e, valida contra o XSD oficial e copia
+- **Dados abertos**: NCM/NBS aceitam `q=` (busca textual por descrição) além de `prefixo`
+
 ## [0.3.0] — 2026-11-19
 
 ### Adicionado

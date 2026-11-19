@@ -19,7 +19,7 @@ export class ProblemDetailFilter implements ExceptionFilter {
     const instance = request.url ?? "";
 
     if (exception instanceof NegocioException) {
-      const status = this.statusPorCodigo(exception.codigo);
+      const status = exception.httpStatus ?? this.statusPorCodigo(exception.codigo);
       const body = {
         type: `/api/calculadora/observabilidade/erros?codigo=${exception.codigo}`,
         title: exception.titulo,

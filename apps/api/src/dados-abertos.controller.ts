@@ -56,20 +56,22 @@ export class DadosAbertosController {
   @ApiOperation({ summary: "Consulta NCM por prefixo (paginada)" })
   ncm(
     @Query("prefixo") prefixo = "",
+    @Query("q") q = "",
     @Query("limite", new DefaultValuePipe(20), ParseIntPipe) limite = 20,
     @Query("pagina", new DefaultValuePipe(0), ParseIntPipe) pagina = 0,
   ) {
-    return DADOS_ABERTOS.ncm(prefixo, Math.min(limite, 200), pagina);
+    return DADOS_ABERTOS.ncm(prefixo, Math.min(limite, 200), pagina, q || undefined);
   }
 
   @Get("nbs")
   @ApiOperation({ summary: "Consulta NBS por prefixo (paginada)" })
   nbs(
     @Query("prefixo") prefixo = "",
+    @Query("q") q = "",
     @Query("limite", new DefaultValuePipe(20), ParseIntPipe) limite = 20,
     @Query("pagina", new DefaultValuePipe(0), ParseIntPipe) pagina = 0,
   ) {
-    return DADOS_ABERTOS.nbs(prefixo, Math.min(limite, 200), pagina);
+    return DADOS_ABERTOS.nbs(prefixo, Math.min(limite, 200), pagina, q || undefined);
   }
 
   @Get("aliquota-referencia")

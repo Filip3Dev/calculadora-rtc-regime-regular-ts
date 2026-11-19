@@ -39,42 +39,42 @@ export function validarItem(item: ItemOperacaoInput): ItemViolacao[] {
   const v: ItemViolacao[] = [];
   const numero = item.numero as number | null;
   if (numero === null || numero === undefined) {
-    v.push({ anotacao: "NotNull", campo: "numero", mensagem: "não deve ser nulo" });
+    v.push({ anotacao: "NotNull", campo: "numero", mensagem: "must not be null" });
   } else if (numero < 1) {
-    v.push({ anotacao: "Min", campo: "numero", mensagem: "deve ser maior ou igual a 1" });
+    v.push({ anotacao: "Min", campo: "numero", mensagem: "must be greater than or equal to 1" });
   } else if (numero > 9999999) {
-    v.push({ anotacao: "Max", campo: "numero", mensagem: "deve ser menor ou igual a 9999999" });
+    v.push({ anotacao: "Max", campo: "numero", mensagem: "must be less than or equal to 9999999" });
   }
   if (item.cst === null || item.cst === undefined) {
-    v.push({ anotacao: "NotNull", campo: "cst", mensagem: "não deve ser nulo" });
+    v.push({ anotacao: "NotNull", campo: "cst", mensagem: "must not be null" });
   } else {
-    if (!/^\d+$/.test(item.cst)) v.push({ anotacao: "Pattern", campo: "cst", mensagem: "Informar somente dígitos" });
+    if (!/^\d+$/.test(item.cst)) v.push({ anotacao: "Pattern", campo: "cst", mensagem: 'must match "\\d+"' });
     if (item.cst.length < 3 || item.cst.length > 3) {
-      v.push({ anotacao: "Size", campo: "cst", mensagem: "tamanho deve estar entre 3 e 3" });
+      v.push({ anotacao: "Size", campo: "cst", mensagem: "size must be between 3 and 3" });
     }
   }
   if (item.cClassTrib === null || item.cClassTrib === undefined) {
-    v.push({ anotacao: "NotNull", campo: "cClassTrib", mensagem: "não deve ser nulo" });
+    v.push({ anotacao: "NotNull", campo: "cClassTrib", mensagem: "must not be null" });
   } else {
-    if (!/^\d+$/.test(item.cClassTrib)) v.push({ anotacao: "Pattern", campo: "cClassTrib", mensagem: "Informar somente dígitos" });
+    if (!/^\d+$/.test(item.cClassTrib)) v.push({ anotacao: "Pattern", campo: "cClassTrib", mensagem: 'must match "\\d+"' });
     if (item.cClassTrib.length < 6 || item.cClassTrib.length > 6) {
-      v.push({ anotacao: "Size", campo: "cClassTrib", mensagem: "tamanho deve estar entre 6 e 6" });
+      v.push({ anotacao: "Size", campo: "cClassTrib", mensagem: "size must be between 6 and 6" });
     }
   }
   if (item.baseCalculo !== null) {
     if (item.baseCalculo.isNegative()) {
-      v.push({ anotacao: "PositiveOrZero", campo: "baseCalculo", mensagem: "deve ser maior ou igual a 0" });
+      v.push({ anotacao: "PositiveOrZero", campo: "baseCalculo", mensagem: "must be greater than or equal to 0" });
     } else {
       const d = digitos(item.baseCalculo);
       if (d.inteiros > 13 || d.fracionarios > 2) {
-        v.push({ anotacao: "Digits", campo: "baseCalculo", mensagem: "números de dígitos fora do permitido (13 . 2)" });
+        v.push({ anotacao: "Digits", campo: "baseCalculo", mensagem: "numeric value out of bounds (<13 digits>.<2 digits> expected)" });
       }
     }
   }
   if (item.quantidade !== null) {
     const d = digitos(item.quantidade);
     if (d.inteiros > 11 || d.fracionarios > 4) {
-      v.push({ anotacao: "Digits", campo: "quantidade", mensagem: "números de dígitos fora do permitido (11 . 4)" });
+      v.push({ anotacao: "Digits", campo: "quantidade", mensagem: "numeric value out of bounds (<11 digits>.<4 digits> expected)" });
     }
   }
   return v;
@@ -83,10 +83,10 @@ export function validarItem(item: ItemOperacaoInput): ItemViolacao[] {
 /** Bean Validation dos campos globais de OperacaoInput (id, versao, municipio, itens). */
 export function validarOperacaoCamposGlobais(operacao: OperacaoInput): ItemViolacao[] {
   const v: ItemViolacao[] = [];
-  if (!operacao.id) v.push({ anotacao: "NotNull", campo: "id", mensagem: "não deve ser nulo" });
-  if (!operacao.versao) v.push({ anotacao: "NotNull", campo: "versao", mensagem: "não deve ser nulo" });
+  if (!operacao.id) v.push({ anotacao: "NotNull", campo: "id", mensagem: "must not be null" });
+  if (!operacao.versao) v.push({ anotacao: "NotNull", campo: "versao", mensagem: "must not be null" });
   if (operacao.municipio === null || operacao.municipio === undefined) {
-    v.push({ anotacao: "NotNull", campo: "municipio", mensagem: "não deve ser nulo" });
+    v.push({ anotacao: "NotNull", campo: "municipio", mensagem: "must not be null" });
   } else if (operacao.municipio < 0 || operacao.municipio > 9999999) {
     v.push({ anotacao: "Min", campo: "municipio", mensagem: "deve estar entre 0 e 9999999" });
   }
@@ -181,4 +181,31 @@ export function parseOperacao(json: OperacaoJson): OperacaoInput {
     cg,
     (json.itens ?? []).map(parseItem),
   );
+}
+
+/** Validação global estilo Jakarta — fail-fast do original (400 antes do cálculo). */
+export function validarOperacaoRequest(operacao: OperacaoInput): ItemViolacao[] {
+  const v: ItemViolacao[] = [];
+  if (!operacao.id) v.push({ anotacao: "NotNull", campo: "id", mensagem: "must not be null" });
+  if (!operacao.versao) v.push({ anotacao: "NotNull", campo: "versao", mensagem: "must not be null" });
+  if (operacao.municipio === null || operacao.municipio === undefined) {
+    v.push({ anotacao: "NotNull", campo: "municipio", mensagem: "must not be null" });
+  } else if (operacao.municipio < 0 || operacao.municipio > 9999999) {
+    v.push({ anotacao: "Max", campo: "municipio", mensagem: "must be less than or equal to 9999999" });
+  }
+  if (operacao.uf !== null && operacao.uf !== undefined && operacao.uf.length !== 2) {
+    v.push({ anotacao: "Size", campo: "uf", mensagem: "size must be between 2 and 2" });
+  }
+  if (operacao.tpDoc !== null && operacao.tpDoc !== undefined && (operacao.tpDoc < 1 || operacao.tpDoc > 999)) {
+    v.push({ anotacao: "Max", campo: "tpDoc", mensagem: "must be less than or equal to 999" });
+  }
+  if (!operacao.itens || operacao.itens.length === 0) {
+    v.push({ anotacao: "NotEmpty", campo: "itens", mensagem: "must not be empty" });
+  }
+  operacao.itens.forEach((item, idx) => {
+    for (const viol of validarItem(item)) {
+      v.push({ anotacao: viol.anotacao, campo: `itens[${idx}].${viol.campo}`, mensagem: viol.mensagem });
+    }
+  });
+  return v;
 }

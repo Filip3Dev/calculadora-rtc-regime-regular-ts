@@ -34,11 +34,11 @@ function denull(elems: XmlElem[]): XmlElem[] {
 export function writeXml(root: XmlElem, namespace: string): string {
   const header = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
   const attrs = ` xmlns="${namespace}"`;
-  return `${header}\n${serialize(root, attrs, 0)}`;
+  return `${header}\n${serialize(root, attrs, 0)}\n`; // JAXB termina com quebra de linha
 }
 
 function serialize(e: XmlElem, rootAttrs: string, depth: number): string {
-  const pad = "  ".repeat(depth);
+  const pad = "    ".repeat(depth); // JAXB_FORMATTED_OUTPUT indenta com 4 espaços
   const attrs =
     (rootAttrs && depth === 0 ? rootAttrs : "") +
     (e.a ? Object.entries(e.a).map(([k, v]) => ` ${k}="${escapeXml(v)}"`).join("") : "");

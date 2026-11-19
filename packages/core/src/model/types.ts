@@ -3,6 +3,7 @@
  * Valores monetários/alíquotas/quantidades são JBD (BigDecimal Java com escala).
  */
 import { JBD } from "./jbd.js";
+import { DataFatoGeradorNaoInformadaException } from "../errors.js";
 
 // ─── Enums ───────────────────────────────────────────────────────────────────
 
@@ -347,16 +348,11 @@ export class OperacaoInput {
   getFatoGeradorAplicavel(): string {
     const d = this.dhFatoGerador ?? this.dataHoraEmissao;
     if (d) return d.slice(0, 10);
-    throw new DataFatoGeradorErro();
+    throw new DataFatoGeradorNaoInformadaException();
   }
 }
 
-/** Erro leve — substituído pela exceção de domínio no parse (ver errors.ts). */
-class DataFatoGeradorErro extends Error {
-  constructor() {
-    super("A data do fato gerador não foi informada.");
-  }
-}
+
 
 // ─── ElementoBaseCalculo (catálogo de composição das bases) ──────────────────
 

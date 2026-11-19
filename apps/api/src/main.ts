@@ -8,9 +8,10 @@ import { calculadora } from "./calc.provider.js";
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, { logger: ["log", "warn", "error"] });
+  app.useBodyParser("json", { limit: "50mb" });
 
   // XML chega como text/plain ou application/xml (validação XSD)
-  app.useBodyParser("text", { type: ["text/plain", "application/xml", "text/xml"], limit: "10mb" });
+  app.useBodyParser("text", { type: ["text/plain", "application/xml", "text/xml"], limit: "50mb" });
 
   app.setGlobalPrefix("api");
   app.useGlobalFilters(new ProblemDetailFilter());

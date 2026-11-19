@@ -19,7 +19,8 @@ O motor reproduz o cálculo oficial com **paridade estrita de saída** — mesmo
 
 - ⚖️ **Paridade comprovada** — regressão oficial de 262 objetos e 12 cenários de compra governamental (regime-geral + observabilidade) passam campo a campo
 - 🚫☕ **Sem Java** — o banco SQLite oficial é gerado por um *runner* TypeScript a partir dos mesmos scripts Flyway do original
-- 🖥️ **Playground web incluso** — monte a operação, calcule e veja a memória de cálculo por tributo
+- 🖥️ **Playground web incluso** — **Assistente** com autocompletes (NCM/NBS por código ou descrição, cClassTrib, CST, municípios) + editor JSON, e **aba XML** que gera e valida o XML do resultado
+- 🧪 **Teste diferencial ao vivo** — 83/83 idênticos à API Java oficial rodando lado a lado (cálculo, erros e XML byte a byte)
 - 🧩 **Geração e validação de XML** do grupo RTC para 7 tipos de DF-e, contra os XSDs oficiais da SEFAZ
 
 > **Aviso:** projeto independente, de código aberto, **não oficial**. As alíquotas de 2026 na base são valores de referência (ainda não definidos em lei) — a calculadora oficial as trata como dados de simulação, e este porte reproduz esse comportamento.
@@ -185,7 +186,23 @@ Confirme que o arquivo foi criado: `ls -lah db/calculadora.db` (~5 MB, 54 tabela
 
 > **Atenção:** a API só funciona com o banco gerado.
 
-### 4. Executar os Testes
+### 4. Teste Diferencial (opcional — paridade ao vivo)
+
+Sobe a API Java oficial em Docker e compara as duas lado a lado (cálculo, erros e XML byte a byte):
+
+```bash
+# uma vez: build do JAR oficial + banco (Docker, sem Java local)
+cd ../calculadora-rtc-regime-regular
+mkdir -p calculadora/db
+docker run --rm -v "$PWD":/src -w /src maven:3.9-eclipse-temurin-21 \
+  bash -c "./mvnw -q -DskipTests package && ./mvnw -q flyway:migrate -Dflyway.configFiles=./flyway/flyway-pro.conf --batch-mode --errors"
+docker run -d --name rtc-java -p 8081:8080 -v "$PWD":/src -w /src eclipse-temurin:21-jre \
+  java -DspringProfiles.active=offline -jar target/api-regime-geral.jar
+cd ../calculadora-rtc-regime-regular-ts
+node scripts/diferencial.mts   # → 83/83 iguais
+```
+
+### 5. Executar os Testes
 
 Os testes de paridade usam os fixtures do repositório Java original; aponte `JAVA_FIXTURES` para um clone local (sem ela, os golden tests pulam):
 
@@ -194,7 +211,7 @@ git clone https://github.com/ReceitaFederal/calculadora-rtc-regime-regular /tmp/
 JAVA_FIXTURES=/tmp/calculadora-java/src/test/resources pnpm --filter @rtc/core test
 ```
 
-### 5. Executar a API
+### 6. Executar a API
 
 ```bash
 pnpm dev:api          # desenvolvimento (tsx watch)
@@ -204,7 +221,7 @@ pnpm build && node apps/api/dist/main.js
 
 A API estará disponível em `http://localhost:8080/api` e o Swagger em `http://localhost:8080/api/swagger`.
 
-### 6. Executar o Playground
+### 7. Executar o Playground
 
 Com a API de pé, em outro terminal:
 
@@ -212,9 +229,9 @@ Com a API de pé, em outro terminal:
 pnpm dev:web
 ```
 
-O playground estará disponível em `http://localhost:5173`: exemplos prontos, modos fail-fast e observabilidade, totais, cartões por tributo com memória de cálculo e visualização dos erros `REG`/`CAL` por item.
+O playground estará disponível em `http://localhost:5173`: modo **Assistente** (formulário guiado com autocompletes alimentados pelos dados abertos) ou **JSON** (exemplos prontos), modos fail-fast e observabilidade, totais, cartões por tributo com memória de cálculo, visualização dos erros `REG`/`CAL` por item e **aba XML** (gerar para os 7 tipos de DF-e + validar contra o XSD oficial).
 
-### 7. Deploy (Cloudflare)
+### 8. Deploy (Cloudflare)
 
 ```bash
 pnpm deploy:cloudflare
@@ -222,7 +239,7 @@ pnpm deploy:cloudflare
 
 Publica o Worker de borda (`deploy/edge/`) que serve o playground como Static Assets e proxya `/api/*` para a API em um container gerenciado por Durable Object (sonda de prontidão, sleep após 10 min de inatividade). É o deploy usado em **rtc.bitpag.xyz**. Nota: após um deploy, o container em execução troca para a imagem nova no próximo ciclo de inatividade (até ~10 min).
 
-### 8. Docker (alternativa)
+### 9. Docker (alternativa)
 
 ```bash
 docker build -t calculadora-rtc-regime-regular-ts .
@@ -322,7 +339,8 @@ curl -X POST "http://localhost:8080/api/calculadora/xml/generate?tipo=nfe" \
 | Bases de mercadorias (IS e CBS/IBS) | ✅ |
 | Download da base e status de versão offline | ✅ |
 | Validação XML contra XSDs SEFAZ (8 tipos, anti-XXE) | ✅ |
-| Geração do XML do grupo RTC a partir do ROC (7 tipos geráveis; NFS-e é validação-only, como no original) | ✅ valida contra os `grupo.xsd` oficiais |
+| Geração do XML do grupo RTC a partir do ROC (7 tipos geráveis; NFS-e é validação-only, como no original) | ✅ **byte a byte** idêntico à API Java (teste diferencial) |
+| Respostas de erro (status HTTP + detail) | ✅ hierarquia de exceções portada (404/400/422) — 25 casos oficiais idênticos |
 | Crédito presumido, transferência de crédito, ajuste de competência e estorno (grupos `gCredPres*`, `gTransfCred`, `gAjusteCompet`, `gEstornoCred`) | ⛔ *stubs* nulos — como no próprio original (previstos no roadmap oficial) |
 
 ---

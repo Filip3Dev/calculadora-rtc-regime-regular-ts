@@ -4,8 +4,15 @@
  */
 import type { EstadoItem } from "./model/types.js";
 
-/** Base de todas as exceções de negócio — carrega código REG/CAL e campo. */
+/**
+ * Base de todas as exceções de negócio — carrega código REG/CAL e campo.
+ * `httpStatus` espelha a hierarquia do ApiExceptionHandler do original:
+ * EntidadeNaoEncontradaException→404 · CampoInvalidoException→400 ·
+ * ValidacaoException→422 (inclui ErroFaltaImplementacao) · demais CAL→500.
+ */
 export class NegocioException extends Error {
+  readonly httpStatus: number;
+
   constructor(
     message: string,
     readonly codigo: string,
@@ -17,7 +24,20 @@ export class NegocioException extends Error {
   ) {
     super(message);
     this.name = new.target.name;
+    this.httpStatus = statusPorCodigo(codigo);
   }
+}
+
+/** Hierarquia → status HTTP (família "NaoEncontrada" = EntidadeNaoEncontradaException). */
+function statusPorCodigo(codigo: string): number {
+  const NAO_ENCONTRADO = new Set([
+    "REG-002", "REG-003", "REG-004", "REG-005", "REG-008", "REG-019", "REG-020", "REG-028",
+    "CAL-001", "CAL-002", "CAL-003", "CAL-004", "CAL-009", "CAL-010", "CAL-011", "CAL-012",
+  ]);
+  if (NAO_ENCONTRADO.has(codigo)) return 404;
+  if (codigo === "REG-024" || codigo === "REG-021") return 400; // CampoInvalidoException (DataFatoGerador herda)
+  if (codigo.startsWith("REG-") || codigo === "CAL-007") return 422; // ValidacaoException (ErroFaltaImplementacao herda)
+  return 500;
 }
 
 const f = (s: string, ...args: Array<string | number | null | undefined>): string => {

@@ -85,14 +85,16 @@ export class DadosAbertosService {
       .all({ idTributo, data });
   }
 
-  ncm(prefixo: string, limite: number, pagina: number) {
-    const where = prefixo ? "WHERE NCM_CD LIKE :prefixo" : "";
+  ncm(prefixo: string, limite: number, pagina: number, q?: string) {
+    // busca textual (q) tem prioridade sobre prefixo numérico
+    const where = q ? "WHERE NCM_DESCRICAO LIKE :q" : prefixo ? "WHERE NCM_CD LIKE :prefixo" : "";
     const params: Record<string, unknown> = {
       limite,
       offset: pagina * limite,
     };
+    if (q) params.q = `%${q}%`;
     if (prefixo) params.prefixo = `${prefixo}%`;
-    const countParams = prefixo ? { prefixo: `${prefixo}%` } : {};
+    const countParams = q ? { q: `%${q}%` } : prefixo ? { prefixo: `${prefixo}%` } : {};
     const total = (this.db.prepare(`SELECT COUNT(*) AS c FROM NCM ${where}`).get(countParams) as { c: number }).c;
     const itens = this.db
       .prepare(
@@ -103,11 +105,12 @@ export class DadosAbertosService {
     return { total, pagina, limite, itens };
   }
 
-  nbs(prefixo: string, limite: number, pagina: number) {
-    const where = prefixo ? "WHERE NBS_CD LIKE :prefixo" : "";
+  nbs(prefixo: string, limite: number, pagina: number, q?: string) {
+    const where = q ? "WHERE NBS_DESCRICAO LIKE :q" : prefixo ? "WHERE NBS_CD LIKE :prefixo" : "";
     const params: Record<string, unknown> = { limite, offset: pagina * limite };
+    if (q) params.q = `%${q}%`;
     if (prefixo) params.prefixo = `${prefixo}%`;
-    const countParams = prefixo ? { prefixo: `${prefixo}%` } : {};
+    const countParams = q ? { q: `%${q}%` } : prefixo ? { prefixo: `${prefixo}%` } : {};
     const total = (this.db.prepare(`SELECT COUNT(*) AS c FROM NBS ${where}`).get(countParams) as { c: number }).c;
     const itens = this.db
       .prepare(

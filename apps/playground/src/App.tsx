@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import { Assistente, doJson, itemVazio, paraJson, type OperacaoForm } from "./Assistente.js";
+import { XmlPanel } from "./XmlPanel.js";
 
 // ─── Tipos mínimos do ROC para renderização ─────────────────────────────────
 
@@ -296,9 +298,24 @@ function ItemCard({ obj }: { obj: Objeto }) {
 
 // ─── App ─────────────────────────────────────────────────────────────────────
 
+const FORM_INICIAL: OperacaoForm = {
+  dhFatoGerador: "2026-06-01T09:50",
+  uf: "RS",
+  municipio: 4314902,
+  municipioLabel: "Porto Alegre",
+  tpDoc: "",
+  gCompraGov: false,
+  tpEnteGov: "1",
+  tpOperGov: "1",
+  itens: [itemVazio(1)],
+};
+
 export function App() {
+  const [modoEntrada, setModoEntrada] = useState<"assistente" | "json">("json");
+  const [form, setForm] = useState<OperacaoForm>(FORM_INICIAL);
   const [texto, setTexto] = useState(JSON.stringify(EXEMPLOS["Operação simples (mercadoria, 2026)"], null, 2));
   const [modo, setModo] = useState<"regime-geral" | "observabilidade">("regime-geral");
+  const [abaResultado, setAbaResultado] = useState<"visao" | "json" | "xml">("visao");
   const [roc, setRoc] = useState<Roc | null>(null);
   const [erro, setErro] = useState<{ status: number; titulo: string; detail: string; codigo?: string; errors?: ErroDetalhe[] } | null>(null);
   const [carregando, setCarregando] = useState(false);
@@ -312,26 +329,50 @@ export function App() {
       .catch(() => setVersao("indisponível"));
   }, []);
 
+  const [rocBruto, setRocBruto] = useState<Record<string, unknown> | null>(null);
+
   const jsonValido = useMemo(() => {
+    if (modoEntrada === "assistente") return !!form.municipio && form.itens.length > 0;
     try {
       JSON.parse(texto);
       return true;
     } catch {
       return false;
     }
-  }, [texto]);
+  }, [texto, modoEntrada, form]);
+
+  /** alterna assistente ↔ json carregando o conteúdo de um no outro */
+  function alternarEntrada(destino: "assistente" | "json") {
+    if (destino === "json" && modoEntrada === "assistente") {
+      try {
+        setTexto(JSON.stringify(paraJson(form), null, 2));
+      } catch {
+        /* mantém texto atual */
+      }
+    } else if (destino === "assistente" && modoEntrada === "json") {
+      try {
+        setForm(doJson(JSON.parse(texto)));
+      } catch {
+        /* mantém form atual */
+      }
+    }
+    setModoEntrada(destino);
+  }
 
   async function calcular() {
     setCarregando(true);
     setErro(null);
     setRoc(null);
+    setRocBruto(null);
+    setAbaResultado("visao");
+    const corpo = modoEntrada === "assistente" ? JSON.stringify(paraJson(form)) : texto;
     try {
       const endpoint =
         modo === "observabilidade" ? "/api/calculadora/observabilidade/regime-geral" : "/api/calculadora/regime-geral";
       const res = await fetch(endpoint, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: texto,
+        body: corpo,
       });
       const body = await res.json();
       if (!res.ok) {
@@ -344,6 +385,7 @@ export function App() {
         });
       } else {
         setRoc(body as Roc);
+        setRocBruto(body as Record<string, unknown>);
       }
     } catch (e) {
       setErro({ status: 0, titulo: "Falha de rede", detail: (e as Error).message, codigo: undefined, errors: undefined });
@@ -373,9 +415,21 @@ export function App() {
       <main>
         <section className="painel entrada">
           <div className="painel-barra">
-            <h2>Operação (JSON)</h2>
+            <h2>Operação</h2>
+            <div className="modos">
+              <button className={modoEntrada === "assistente" ? "ativo" : ""} onClick={() => alternarEntrada("assistente")}>
+                Assistente
+              </button>
+              <button className={modoEntrada === "json" ? "ativo" : ""} onClick={() => alternarEntrada("json")}>
+                JSON
+              </button>
+            </div>
             <select
-              onChange={(e) => e.target.value && setTexto(JSON.stringify(EXEMPLOS[e.target.value], null, 2))}
+              hidden={modoEntrada === "assistente"}
+              onChange={(e) => {
+                setTexto(JSON.stringify(EXEMPLOS[e.target.value], null, 2));
+                setModoEntrada("json");
+              }}
               defaultValue=""
             >
               <option value="" disabled>
@@ -388,12 +442,16 @@ export function App() {
               ))}
             </select>
           </div>
-          <textarea
-            value={texto}
-            onChange={(e) => setTexto(e.target.value)}
-            spellCheck={false}
-            className={jsonValido ? "" : "invalido"}
-          />
+          {modoEntrada === "assistente" ? (
+            <Assistente form={form} setForm={setForm} />
+          ) : (
+            <textarea
+              value={texto}
+              onChange={(e) => setTexto(e.target.value)}
+              spellCheck={false}
+              className={jsonValido ? "" : "invalido"}
+            />
+          )}
           <div className="acoes">
             <div className="modos">
               <button className={modo === "regime-geral" ? "ativo" : ""} onClick={() => setModo("regime-geral")}>
@@ -417,9 +475,17 @@ export function App() {
           <div className="painel-barra">
             <h2>Resultado</h2>
             {roc && (
-              <button className="toggle" onClick={() => setVerJson(!verJson)}>
-                {verJson ? "▾ Visão detalhada" : "▸ JSON bruto"}
-              </button>
+              <div className="modos">
+                <button className={abaResultado === "visao" ? "ativo" : ""} onClick={() => setAbaResultado("visao")}>
+                  Visão
+                </button>
+                <button className={abaResultado === "json" ? "ativo" : ""} onClick={() => setAbaResultado("json")}>
+                  JSON
+                </button>
+                <button className={abaResultado === "xml" ? "ativo" : ""} onClick={() => setAbaResultado("xml")} disabled={modo === "observabilidade"}>
+                  XML
+                </button>
+              </div>
             )}
           </div>
 
@@ -444,9 +510,11 @@ export function App() {
             </div>
           )}
 
-          {roc && verJson && <pre className="json">{JSON.stringify(roc, null, 2)}</pre>}
+          {roc && abaResultado === "json" && <pre className="json">{JSON.stringify(roc, null, 2)}</pre>}
 
-          {roc && !verJson && (
+          {roc && abaResultado === "xml" && rocBruto && <XmlPanel roc={rocBruto} />}
+
+          {roc && abaResultado === "visao" && (
             <>
               {tot?.ISTot && (
                 <div className="faixa-total">

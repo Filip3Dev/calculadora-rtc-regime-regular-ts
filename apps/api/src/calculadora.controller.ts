@@ -2,10 +2,11 @@
  * Controller principal — espelha CalculadoraTributoController e
  * ObservabilidadeController do serviço Java.
  */
-import { Body, Controller, Get, HttpCode, Post, Query } from "@nestjs/common";
+import { BadRequestException, Body, Controller, Get, HttpCode, Post, Query } from "@nestjs/common";
 import { ApiOperation, ApiTags } from "@nestjs/swagger";
 import { CATALOGO_ERROS, calculadora } from "./calc.provider.js";
 import { BodyExemplo, OPERACAO_OBSERVABILIDADE, OPERACAO_SIMPLES, RespostaOk, RespostaProblem422 } from "./swagger-exemplos.js";
+import { parseOperacao, validarOperacaoRequest } from "@rtc/core";
 
 @ApiTags("calculadora")
 @Controller("calculadora")
@@ -18,6 +19,14 @@ export class CalculadoraController {
   @RespostaProblem422()
   @ApiOperation({ summary: "Cálculo de CBS, IBS e Imposto Seletivo (a operação falha no primeiro erro)" })
   calcularTributos(@Body() operacao: Record<string, unknown>): Record<string, unknown> {
+    // PARITY: Bean Validation do original roda antes do cálculo (400 MethodArgumentNotValid)
+    const violacoes = validarOperacaoRequest(parseOperacao(operacao as never));
+    if (violacoes.length > 0) {
+      const detail = "Um ou mais campos são inválidos - " + violacoes.map((x) => `[${x.campo}: ${x.mensagem}] `).join("");
+      throw new BadRequestException({
+        type: "about:blank", title: "Bad Request", status: 400, detail, instance: "/api/calculadora/regime-geral",
+      });
+    }
     return calculadora().calcularTributos(operacao as never);
   }
 
