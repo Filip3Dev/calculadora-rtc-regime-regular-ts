@@ -6,6 +6,7 @@ import { ApiOperation, ApiTags } from "@nestjs/swagger";
 import { JBD } from "@rtc/core";
 import type { Response } from "express";
 import { calculadora } from "./calc.provider.js";
+import { BodyExemplo, PEDAGIO, RespostaOk } from "./swagger-exemplos.js";
 
 @ApiTags("pedagio")
 @Controller("calculadora")
@@ -13,6 +14,8 @@ export class PedagioController {
   /** POST /api/calculadora/pedagio */
   @Post("pedagio")
   @HttpCode(200)
+  @BodyExemplo("Praças por trecho (município + UF + extensão); a alíquota efetiva é proporcional à extensão", PEDAGIO)
+  @RespostaOk("Tributos por praça + totais", { trechos: [{ numero: 1, cbs: { aliquota: "0.90", aliquotaEfetiva: "0.54", tributoCalculado: "0.54" } }], total: { cbsTotal: { valorTributo: "0.90" } } })
   @ApiOperation({ summary: "Cálculo de CBS e IBS em operações de pedágio, distribuídos por praça proporcionalmente à extensão do trecho" })
   pedagio(
     @Body()

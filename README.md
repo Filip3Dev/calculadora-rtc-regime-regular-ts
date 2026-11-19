@@ -35,7 +35,9 @@ O motor reproduz o cálculo oficial com **paridade estrita de saída** — mesmo
 
 ## Funcionalidades
 
-Todos os caminhos começam com `http://localhost:8080/api/calculadora`. A lista completa está no Swagger (`http://localhost:8080/api/swagger`).
+Todos os caminhos começam com `http://localhost:8080/api/calculadora`. A lista completa está no Swagger (`http://localhost:8080/api/swagger`), com exemplos de corpo/resposta nos principais endpoints.
+
+Exemplos de utilização completos (entradas e saídas reais, incluindo observabilidade com erros por item, base unificada, XML, pedágio e NFS-e) estão em [docs/exemplos.md](docs/exemplos.md).
 
 ### Cálculo
 

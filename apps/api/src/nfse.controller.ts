@@ -5,6 +5,7 @@ import { Body, Controller, Get, HttpCode, Post, Query } from "@nestjs/common";
 import { ApiOperation, ApiTags } from "@nestjs/swagger";
 import { JBD } from "@rtc/core";
 import { calculadora } from "./calc.provider.js";
+import { BodyExemplo, NFSE_BASE_CALCULO, RespostaOk, RespostaProblem422 } from "./swagger-exemplos.js";
 import {
   LOCAIS_FORNECIMENTO,
   LOCAIS_INCIDENCIA,
@@ -32,6 +33,9 @@ export class NfseController {
   /** POST /api/calculadora/nfse/base-calculo */
   @Post("base-calculo")
   @HttpCode(200)
+  @BodyExemplo("Ano ≥ 2026; PIS/COFINS só até 2027, ISS até 2033", NFSE_BASE_CALCULO)
+  @RespostaOk("Base de cálculo NFS-e", { baseCalculo: "890.00" })
+  @RespostaProblem422()
   @ApiOperation({ summary: "Cálculo da base de cálculo de CBS e IBS em operações de NFS-e" })
   baseCalculo(@Body() req: NfseBaseCalculoRequest) {
     return calculadora().calcularNfseBaseCalculo({

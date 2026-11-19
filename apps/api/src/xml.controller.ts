@@ -4,6 +4,7 @@
  */
 import { BadRequestException, Body, Controller, Get, Header, HttpCode, Post, Query } from "@nestjs/common";
 import { gerarXml, TIPOS_GERACAO } from "@rtc/core";
+import { BodyExemplo, BodyTextoXml, ROC_EXEMPLO, RespostaOk } from "./swagger-exemplos.js";
 import { ApiOperation, ApiTags } from "@nestjs/swagger";
 import {spawnSync} from "node:child_process";
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -30,6 +31,8 @@ export class XmlController {
   /** POST /api/calculadora/xml/validate?tipo=nfe&subtipo=grupo — body: XML puro. */
   @Post("validate")
   @HttpCode(200)
+  @BodyTextoXml("XML a validar (texto puro)", '<?xml version="1.0" encoding="UTF-8"?><infNFe xmlns="http://www.portalfiscal.inf.br/nfe">...</infNFe>')
+  @RespostaOk("Resultado da validação contra o XSD oficial", { tipo: "nfe", subtipo: "grupo", valido: false, erros: ["documento:1: element x: Schemas validity error"] })
   @ApiOperation({ summary: "Valida um XML (grupo ou nota completa) contra o XSD oficial do tipo de documento" })
   validar(@Query("tipo") tipo: string, @Query("subtipo") subtipo: string, @Body() xml: string) {
     if (!TIPOS.includes(tipo as Tipo)) {
@@ -68,6 +71,7 @@ export class XmlController {
   @Post("generate")
   @HttpCode(200)
   @Header("content-type", "application/xml")
+  @BodyExemplo("Envie a RESPOSTA de POST /regime-geral (não a da observabilidade) como corpo", ROC_EXEMPLO)
   @ApiOperation({ summary: "Gera o XML do grupo de tributação RTC (infNFe parcial) a partir do ROC" })
   gerar(@Query("tipo") tipo: string, @Body() roc: Record<string, unknown>): string {
     if (!TIPOS_GERACAO.includes(tipo as never)) {

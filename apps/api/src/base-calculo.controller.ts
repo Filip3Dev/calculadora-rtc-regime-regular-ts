@@ -5,6 +5,7 @@ import { Body, Controller, HttpCode, Post } from "@nestjs/common";
 import { ApiOperation, ApiTags } from "@nestjs/swagger";
 import { JBD, OpcaoSimplesNacional, RegimeApuracaoIbsCbsSN } from "@rtc/core";
 import { calculadora } from "./calc.provider.js";
+import { BASE_CIBS_MERCADORIAS, BASE_IS_MERCADORIAS, BASE_UNIFICADA, BASE_UNIFICADA_NFSE, BodyExemplo, RespostaOk, RespostaProblem422 } from "./swagger-exemplos.js";
 
 interface BaseCalculoUnificadaRequest {
   anoFatoGerador: number;
@@ -18,12 +19,18 @@ interface BaseCalculoUnificadaRequest {
 export class BaseCalculoController {
   @Post("base-calculo-unificada")
   @HttpCode(200)
+  @BodyExemplo("Componentes ACHATADOS no nível raiz (JsonUnwrapped, como a API oficial); natureza aceita bem/servico", BASE_UNIFICADA)
+  @RespostaOk("Bases RG/IS/SN com avisos de componentes ignorados por vigência", { baseRG: "870.00000000", baseIS: "840.00000000", baseSN: "1060.00000000", avisos: ["Campo vPIS não compõe as bases para o ano 2027 (vigência 2026–2026) e foi ignorado no cálculo"] })
   @ApiOperation({ summary: "Cálculo das bases unificadas (RG/IBS-CBS, IS e Simples Nacional) a partir dos componentes" })
   baseCalculoUnificada(@Body() req: BaseCalculoUnificadaRequest) {
+    // PARITY: @JsonUnwrapped do original — componentes vêm ACHATADOS no mesmo
+    // nível dos demais campos (aceita também aninhado em "componentes")
+    const { anoFatoGerador, tipoDocumento, natureza, componentes, ...achatados } = req;
     return calculadora().calcularBaseUnificada({
-      componentes: req.componentes,
+      componentes: (componentes && Object.keys(componentes).length > 0 ? componentes : achatados),
       ano: req.anoFatoGerador,
-      natureza: req.natureza ?? null,
+      // natureza aceita bem/servico em qualquer caixa ( Jackson enum do original)
+      natureza: req.natureza ? (req.natureza.toUpperCase() as "BEM" | "SERVICO") : null,
       tpDoc: req.tipoDocumento,
     });
   }
@@ -31,6 +38,9 @@ export class BaseCalculoController {
   /** POST /api/calculadora/base-calculo/is-mercadorias — base do Imposto Seletivo (mercadorias). */
   @Post("is-mercadorias")
   @HttpCode(200)
+  @BodyExemplo("Ano ≥ 2027; ICMS/ISS só até 2033", BASE_IS_MERCADORIAS)
+  @RespostaOk("Base do IS", { baseCalculo: "1020" })
+  @RespostaProblem422()
   @ApiOperation({ summary: "Cálculo da base de cálculo do Imposto Seletivo em operações com mercadorias" })
   calcularISMercadorias(@Body() req: Record<string, number | string>): unknown {
     const j = (v: number | string | undefined): JBD => JBD.of(v ?? 0) ?? JBD.ZERO;
@@ -57,6 +67,9 @@ export class BaseCalculoController {
   /** POST /api/calculadora/base-calculo/cbs-ibs-mercadorias — base de CBS/IBS (mercadorias). */
   @Post("cbs-ibs-mercadorias")
   @HttpCode(200)
+  @BodyExemplo("Ano ≥ 2026; PIS/COFINS só até 2027, ICMS/ISS até 2033", BASE_CIBS_MERCADORIAS)
+  @RespostaOk("Base de CBS/IBS", { baseCalculo: "1220" })
+  @RespostaProblem422()
   @ApiOperation({ summary: "Cálculo da base de cálculo de CBS e IBS em operações com mercadorias" })
   calcularCibs(@Body() req: Record<string, number | string>): unknown {
     const j = (v: number | string | undefined): JBD => JBD.of(v ?? 0) ?? JBD.ZERO;
@@ -86,6 +99,8 @@ export class BaseCalculoController {
   /** POST /api/calculadora/base-calculo/base-calculo-unificada-nfse */
   @Post("base-calculo-unificada-nfse")
   @HttpCode(200)
+  @BodyExemplo("opSimpNac: 1=Não optante, 2=MEI, 3=Optante ME/EPP, 4=Pendente; situacao: comum, salaoParceiro ou locacao9903", BASE_UNIFICADA_NFSE)
+  @RespostaOk("Bases RG e SN com avisos/erros (E1302, E1534, E0436, LEIAUTE-XTP)", { baseRG: "820.00", baseSN: null, avisos: [], erros: [] })
   @ApiOperation({ summary: "Bases unificadas RG e SN da NFS-e (MEI, locação 99.03, salão/profissional parceiro, documentos de ajuste)" })
   baseCalculoUnificadaNfse(@Body() req: {
       anoFatoGerador: number;

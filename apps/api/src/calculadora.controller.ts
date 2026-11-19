@@ -5,6 +5,7 @@
 import { Body, Controller, Get, HttpCode, Post, Query } from "@nestjs/common";
 import { ApiOperation, ApiTags } from "@nestjs/swagger";
 import { CATALOGO_ERROS, calculadora } from "./calc.provider.js";
+import { BodyExemplo, OPERACAO_OBSERVABILIDADE, OPERACAO_SIMPLES, RespostaOk, RespostaProblem422 } from "./swagger-exemplos.js";
 
 @ApiTags("calculadora")
 @Controller("calculadora")
@@ -12,6 +13,9 @@ export class CalculadoraController {
   /** POST /api/calculadora/regime-geral — cálculo fail-fast. */
   @Post("regime-geral")
   @HttpCode(200)
+  @BodyExemplo("Operação com itens (NCM/NBS, CST, cClassTrib, base de cálculo; a partir de 2027 informe aliquotasNominais)", OPERACAO_SIMPLES)
+  @RespostaOk("ROC com grupos de tributação por item e totais", { objetos: [{ nObj: 1, tribCalc: { IBSCBS: { CST: "000", cClassTrib: "000001", gIBSCBS: { vBC: "200.00", gCBS: { pCBS: "0.90", vCBS: "1.80" } } } } }], total: { tribCalc: { IBSCBSTot: { vBCIBSCBS: "200.00" } } } })
+  @RespostaProblem422()
   @ApiOperation({ summary: "Cálculo de CBS, IBS e Imposto Seletivo (a operação falha no primeiro erro)" })
   calcularTributos(@Body() operacao: Record<string, unknown>): Record<string, unknown> {
     return calculadora().calcularTributos(operacao as never);
@@ -20,6 +24,8 @@ export class CalculadoraController {
   /** POST /api/calculadora/observabilidade/regime-geral — erros por item. */
   @Post("observabilidade/regime-geral")
   @HttpCode(200)
+  @BodyExemplo("Operação com 4 itens, um deles com erro proposital (NCM não vinculada)", OPERACAO_OBSERVABILIDADE)
+  @RespostaOk("HTTP 200 mesmo com itens em erro — verifique estadoItem de cada item (CALCULADO, CALCULO_SIMULADO, INCONSISTENCIA_ENTRADA...)", { objetos: [{ nObj: 4, estadoItem: "INCONSISTENCIA_ENTRADA", erros: [{ code: "REG-011", pointer: "#/itens/3/ncm" }] }] })
   @ApiOperation({ summary: "Cálculo com observabilidade (erros por item, sem interromper os demais)" })
   calcularObservabilidade(
     @Body() operacao: Record<string, unknown>,
