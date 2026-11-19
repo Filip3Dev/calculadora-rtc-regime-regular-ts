@@ -133,7 +133,7 @@ O ponto de partida foi a leitura sistemática do código-fonte Java do projeto o
 | Geração/validação XML | JAXB + XSD | `XmlWriter` JAXB-compatível + [xmllint](http://xmlsoft.org/xmllint.html) (libxml2) + os mesmos XSDs SEFAZ |
 | Cache | Caffeine (~50 caches) | LRU+TTL equivalente |
 | Frontend | — | [React 19](https://react.dev/) + [Vite 7](https://vite.dev/) |
-| Testes | JUnit 5 + JaCoCo | [Vitest](https://vitest.dev/) (49 unitários/golden + 17 e2e) |
+| Testes | JUnit 5 + JaCoCo | [Vitest](https://vitest.dev/) (49 unitários/golden + 17 e2e) + teste diferencial ao vivo (83/83 vs. Java) |
 | Distribuição | JAR + banco | Docker (3 estágios) / pnpm |
 
 ---

@@ -24,6 +24,9 @@ Notáveis mudanças deste projeto serão documentadas aqui. O formato segue [Kee
 - **Playground — aba XML**: gera o XML do grupo RTC do resultado calculado para
   qualquer um dos 7 tipos de DF-e, valida contra o XSD oficial e copia
 - **Dados abertos**: NCM/NBS aceitam `q=` (busca textual por descrição) além de `prefixo`
+- **Deploy**: `INSTANCE_NAME` versionado no Worker — instâncias de container persistem entre
+  deploys (mesmo após `wrangler containers delete`); o bump do nome força container novo com
+  a imagem atual na hora
 
 ## [0.3.0] — 2026-11-19
 
