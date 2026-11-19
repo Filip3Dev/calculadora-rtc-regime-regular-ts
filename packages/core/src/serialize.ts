@@ -147,6 +147,11 @@ function monofasiaJson(m: MonofasiaDomain | null | undefined): Json | undefined 
 }
 
 export function objetoJson(o: ObjetoDomain): Json {
+  // limpa chaves undefined (NON_NULL) aqui na fonte — vale para ROC e observabilidade
+  return clean(objetoJsonInterno(o));
+}
+
+function objetoJsonInterno(o: ObjetoDomain): Json {
   const out: Json = { nObj: o.nObj };
   if (o.tribCalc) {
     const trib: Json = {};

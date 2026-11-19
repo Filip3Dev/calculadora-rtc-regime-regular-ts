@@ -5,9 +5,10 @@ import { DadosAbertosController } from "./dados-abertos.controller.js";
 import { XmlController } from "./xml.controller.js";
 import { NfseController } from "./nfse.controller.js";
 import { PedagioController } from "./pedagio.controller.js";
+import { SistemaController } from "./sistema.controller.js";
 import { ProblemDetailFilter } from "./problem-detail.filter.js";
 
 @Module({
-  controllers: [CalculadoraController, BaseCalculoController, DadosAbertosController, XmlController, NfseController, PedagioController],
+  controllers: [CalculadoraController, BaseCalculoController, DadosAbertosController, XmlController, NfseController, PedagioController, SistemaController],
 })
 export class AppModule {}

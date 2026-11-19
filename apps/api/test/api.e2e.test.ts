@@ -205,6 +205,59 @@ describe.skipIf(!dbOk)("API e2e", () => {
     expect(um.length).toBeGreaterThan(0);
   });
 
+  it("POST /calculadora/base-calculo/is-mercadorias e cbs-ibs-mercadorias", async () => {
+    const is = await fetch(`${BASE}/calculadora/base-calculo/is-mercadorias`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ anoFatoGerador: 2027, valorBem: 1000, freteCobrado: 100, icms: 50, descontoIncondicional: 30 }),
+    });
+    expect(await is.json()).toEqual({ baseCalculo: "1020" });
+
+    const cibs = await fetch(`${BASE}/calculadora/base-calculo/cbs-ibs-mercadorias`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ anoFatoGerador: 2026, valorBem: 1000, frete: 100, impostoSeletivo: 200, pis: 10, cofins: 20, icms: 50 }),
+    });
+    expect(await cibs.json()).toEqual({ baseCalculo: "1220" });
+
+    const erro = await fetch(`${BASE}/calculadora/base-calculo/cbs-ibs-mercadorias`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ anoFatoGerador: 2027, valorBem: 1000, pis: 10 }),
+    });
+    expect(erro.status).toBe(400);
+    expect((await erro.json()).detail).toContain("não podem ser informados a partir de 2027: PIS");
+  });
+
+  it("GET /calculadora/dados-abertos — novos endpoints (nbs, alíquotas, grupos, aplicabilidade)", async () => {
+    const nbs = await (await fetch(`${BASE}/calculadora/dados-abertos/nbs/lista?data=2026-06-01`)).json();
+    expect(nbs.length).toBeGreaterThan(1000);
+    const uniao = await (await fetch(`${BASE}/calculadora/dados-abertos/aliquota-uniao?data=2026-06-01`)).json();
+    expect(uniao.aliquotaReferencia).toBe("0.9");
+    const uf = await (await fetch(`${BASE}/calculadora/dados-abertos/aliquota-uf?codigoUf=43&data=2026-06-01`)).json();
+    expect(uf.aliquotaReferencia).toBe("0.1");
+    const grupos = await (await fetch(`${BASE}/calculadora/dados-abertos/dfe/grupos?data=2026-06-01`)).json();
+    expect(grupos[0].descricao).toBe("MERCADORIAS");
+    const trib = await (await fetch(`${BASE}/calculadora/dados-abertos/ator/grupos?data=2026-06-01`)).json();
+    expect(trib.length).toBeGreaterThan(5);
+    const nbsAplicaveis = await (await fetch(`${BASE}/calculadora/dados-abertos/nbs-aplicaveis?cClassTrib=011002&data=2026-06-01`)).json();
+    expect(Array.isArray(nbsAplicaveis)).toBe(true);
+    const classNbs = await (await fetch(`${BASE}/calculadora/dados-abertos/classificacoes-tributarias/nbs?nbs=109052100&data=2026-06-01`)).json();
+    expect(classNbs[0]).toBe("000001");
+    const detalhe = await (await fetch(`${BASE}/calculadora/dados-abertos/classificacoes-tributarias/cbs-ibs/class-trib/000001?data=2026-06-01`)).json();
+    expect(detalhe.descricaoTratamentoTributario).toBe("Tributação integral");
+    expect(detalhe.tiposDfeClassificacao.length).toBeGreaterThan(0);
+    const aplicavel = await (await fetch(`${BASE}/calculadora/dados-abertos/ncm-aplicavel?cClassTrib=000001&ncm=09024000&data=2026-06-01`)).json();
+    expect(aplicavel.valido).toBe(true);
+  });
+
+  it("GET /calculadora/download/url sem configuração → 204; GET /versao/status reporta versão local", async () => {
+    const dl = await fetch(`${BASE}/calculadora/download/url?platform=mac`);
+    expect(dl.status).toBe(204);
+    const status = await (await fetch(`${BASE}/versao/status`)).json();
+    expect(status.local.versaoDb).toBeTruthy();
+  });
+
   it("GET /calculadora/observabilidade/erros consulta o catálogo", async () => {
     const body = await (await fetch(`${BASE}/calculadora/observabilidade/erros?codigo=REG-002`)).json();
     expect(body.codigo).toBe("REG-002");

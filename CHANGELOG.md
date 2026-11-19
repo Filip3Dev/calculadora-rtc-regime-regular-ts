@@ -29,6 +29,34 @@ Notáveis mudanças deste projeto serão documentadas aqui. O formato segue [Kee
   requests quentes. Script renomeado para `deploy:cloudflare` (`pnpm deploy` é comando
   nativo do pnpm e captura o comando antes do script).
 
+## [0.3.0] — 2026-11-19
+
+### Adicionado
+
+- **Paridade de endpoints 100% com a API oficial**:
+  - `POST /base-calculo/is-mercadorias` e `POST /base-calculo/cbs-ibs-mercadorias`
+    (porte fiel do BaseCalculoService: composição integra/não-integra com as
+    mesmas mensagens de erro por vigência)
+  - Dados abertos: `ncm/vigentes`, `nbs/lista`, `nbs-aplicaveis`,
+    `aliquota-uniao|uf|municipio`, `transferencias-ibs` (tabela fixa do original),
+    `dfe/grupos`, `ator/grupos`, `classificacoes-tributarias/nbs`,
+    detalhe por `class-trib/{cClassTrib}` (com tipos de DF-e vinculados) e
+    `ncm-aplicavel` (vínculo por prefixo)
+  - `GET /calculadora/download/url` (por plataforma, 204 sem configuração) e
+    `GET /versao/status` (local × remota)
+- **Golden tests de observabilidade**: os 6 cenários oficiais de compra
+  governamental (`*_output_observabilidade.json`) agora comparam estado do item,
+  tributos e totais campo a campo — inclusive um cenário com erro REG-002.
+
+### Corrigido
+
+- **Bug de paridade no rateio da compra governamental** (achado pelo golden de
+  observabilidade): Consórcio Público e Comitê Gestor do IBS equivalem a
+  MUNICÍPIO e Distrito Federal a ESTADO no `tipoEnteEquivalente()` do original —
+  o porte comparava os códigos crus e zerava o IBS-Mun nesses casos.
+- Serializador de observabilidade omitindo chaves `undefined` (NON_NULL), alinhado ao regime-geral.
+- Endpoints de classificação por CST: valor via path param (antes lido como query, retornando vazio).
+
 ## [0.2.0] — 2026-11-19
 
 ### Adicionado

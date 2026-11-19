@@ -691,10 +691,18 @@ export class TributacaoCompraGovernamentalDomain {
     const b = new TributacaoCompraGovernamentalDomain();
     b.pAliqCBS = pAliqCBSFinal;
     b.vTribCBS = vTribCBSFinal;
-    if (tpEnteGov === TipoEnteGovernamental.ESTADO || tpEnteGov === TipoEnteGovernamental.DISTRITO_FEDERAL) {
+    // PARITY: tipoEnteEquivalente() do enum original — DF equivale a ESTADO;
+    // Consórcio Público e Comitê Gestor do IBS equivalem a MUNICÍPIO
+    const equivaleEstado =
+      tpEnteGov === TipoEnteGovernamental.ESTADO || tpEnteGov === TipoEnteGovernamental.DISTRITO_FEDERAL;
+    const equivaleMunicipio =
+      tpEnteGov === TipoEnteGovernamental.MUNICIPIO ||
+      tpEnteGov === TipoEnteGovernamental.CONSORCIO_PUBLICO ||
+      tpEnteGov === TipoEnteGovernamental.COMITE_GESTOR_IBS;
+    if (equivaleEstado) {
       b.pAliqIBSUF = pcAliquotaFinal;
       b.vTribIBSUF = valorFinal;
-    } else if (tpEnteGov === TipoEnteGovernamental.MUNICIPIO) {
+    } else if (equivaleMunicipio) {
       b.pAliqIBSMun = pcAliquotaFinal;
       b.vTribIBSMun = valorFinal;
     }

@@ -45,6 +45,7 @@ Todos os caminhos começam com `http://localhost:8080/api/calculadora`. A lista 
 | Cálculo com observabilidade (erros por item, sem interromper os demais) | `POST /observabilidade/regime-geral` |
 | Descrição de um código de erro da observabilidade | `GET /observabilidade/erros?codigo=REG-011` |
 | Base de cálculo unificada NF-e/NFC-e (transição 2026–2033) | `POST /base-calculo/base-calculo-unificada` |
+| Base do Imposto Seletivo e de CBS/IBS em mercadorias | `POST /base-calculo/is-mercadorias`, `POST /base-calculo/cbs-ibs-mercadorias` |
 | Base de cálculo de CBS e IBS em NFS-e | `POST /nfse/base-calculo` |
 | Bases unificadas RG e SN da NFS-e (MEI, locação 99.03, salão/profissional parceiro, documentos de ajuste) | `POST /base-calculo/base-calculo-unificada-nfse` |
 | Indicadores de operação da NFS-e (validação de combinação, locais, situações por NBS) | `GET/POST /nfse/indicador-operacao`, `/nfse/local-operacao`, `/nfse/locais-fornecimento` |
@@ -67,7 +68,13 @@ Todos os caminhos começam com `http://localhost:8080/api/calculadora`. A lista 
 | NCM e NBS (consulta por prefixo, paginada) | `GET /dados-abertos/ncm`, `GET /dados-abertos/nbs` |
 | Alíquotas de referência (CBS, IBS-UF, IBS-Município) | `GET /dados-abertos/aliquota-referencia` |
 | UFs, municípios e tipos de documento fiscal | `GET /dados-abertos/ufs`, `/municipios`, `/tipos-documento` |
-| Redutores de compra governamental, transferências de CBS e unidades de medida | `GET /dados-abertos/redutores-compra-governamental`, `/transferencias-cbs`, `/unidades-medida` |
+| Redutores de compra governamental, transferências de CBS/IBS e unidades de medida | `GET /dados-abertos/redutores-compra-governamental`, `/transferencias-cbs`, `/transferencias-ibs`, `/unidades-medida` |
+| NCM/NBS vigentes, NBS aplicáveis por classificação e classificação por NBS | `GET /dados-abertos/ncm/vigentes`, `/nbs/lista`, `/nbs-aplicaveis`, `/classificacoes-tributarias/nbs` |
+| Alíquotas por ente (União, UF, Município) | `GET /dados-abertos/aliquota-uniao`, `/aliquota-uf`, `/aliquota-municipio` |
+| Detalhe da classificação tributária e aplicabilidade de NCM | `GET /dados-abertos/classificacoes-tributarias/cbs-ibs/class-trib/{cClassTrib}`, `/ncm-aplicavel` |
+| Grupos de DF-e e de atores | `GET /dados-abertos/dfe/grupos`, `/ator/grupos` |
+| URL de download da base por plataforma | `GET /calculadora/download/url?platform=` |
+| Status de versão (aplicação/base local × remota) | `GET /versao/status` |
 | Versão da base de dados embutida | `GET /versao` |
 
 ---
@@ -297,10 +304,12 @@ curl -X POST "http://localhost:8080/api/calculadora/xml/generate?tipo=nfe" \
 | Funcionalidade | Status |
 |---|---|
 | Motor CBS/IBS/IS (expressões do banco, monofasia, desoneração/suspensão, diferimento, compra governamental 2027+, base unificada 2026–2033) | ✅ paridade golden |
-| Observabilidade (estado por item, catálogo REG/CAL, ProblemDetail RFC 9457) | ✅ |
+| Observabilidade (estado por item, catálogo REG/CAL, ProblemDetail RFC 9457) | ✅ paridade golden (6 cenários oficiais) |
 | NFS-e (base legada, bases unificadas MEI/locação/salão, indicadores de operação, locais) | ✅ |
 | Pedágio (CBS/IBS por praça, proporcional à extensão) | ✅ |
-| Dados abertos (UFs, municípios, cClassTrib por CST, CST, NCM/NBS, alíquotas de referência, fundamentações, redutores, transferências, unidades) | ✅ |
+| Dados abertos (UFs, municípios, cClassTrib por CST, CST, NCM/NBS, alíquotas por ente, fundamentações, redutores, transferências CBS/IBS, grupos DF-e/ator, aplicabilidade, unidades) | ✅ |
+| Bases de mercadorias (IS e CBS/IBS) | ✅ |
+| Download da base e status de versão offline | ✅ |
 | Validação XML contra XSDs SEFAZ (8 tipos, anti-XXE) | ✅ |
 | Geração do XML do grupo RTC a partir do ROC (7 tipos geráveis; NFS-e é validação-only, como no original) | ✅ valida contra os `grupo.xsd` oficiais |
 | Crédito presumido, transferência de crédito, ajuste de competência e estorno (grupos `gCredPres*`, `gTransfCred`, `gAjusteCompet`, `gEstornoCred`) | ⛔ *stubs* nulos — como no próprio original (previstos no roadmap oficial) |

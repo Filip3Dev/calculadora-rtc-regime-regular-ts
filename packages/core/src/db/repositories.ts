@@ -822,6 +822,108 @@ export class Repositories {
       .all({ data });
   }
 
+
+  // ── Dados abertos: nomenclaturas e grupos ──
+
+  /** Descrição do NCM no nível (2=capítulo, 4=posição, 6=subposição, 7/8=item/subitem). */
+  descricaoNcmNivel(ncm: string, limite: number, data: string): string | null {
+    const row = this.db
+      .prepare(
+        `SELECT LTRIM(RTRIM(n.NCM_DESCRICAO, ' '), ' -') AS descricao
+         FROM NCM n
+         WHERE n.NCM_CD = SUBSTRING(:ncm, 1, :limite)
+           AND :data BETWEEN n.NCM_INICIO_VIGENCIA AND COALESCE(n.NCM_FIM_VIGENCIA, :data)
+         LIMIT 1`,
+      )
+      .get({ ncm, limite, data }) as { descricao: string | null } | undefined;
+    return row ? row.descricao : null;
+  }
+
+  /** NBS vigentes (lista completa). */
+  listarNbs(data: string): Array<{ codigo: string; descricao: string }> {
+    return this.db
+      .prepare(
+        `SELECT NBS_CD AS codigo, NBS_DESCRICAO AS descricao FROM NBS
+         WHERE :data BETWEEN NBS_INICIO_VIGENCIA AND COALESCE(NBS_FIM_VIGENCIA, :data)
+         ORDER BY NBS_CD`,
+      )
+      .all({ data }) as Array<{ codigo: string; descricao: string }>;
+  }
+
+  existeVinculoNbsParaClassificacao(idClassificacaoTributaria: number): number {
+    const row = this.db
+      .prepare(`SELECT EXISTS (SELECT 1 FROM NBS_APLICAVEL WHERE NBSA_CLTR_ID = :id) AS ok`)
+      .get({ id: idClassificacaoTributaria }) as { ok: number };
+    return row.ok;
+  }
+
+  listarNbsAplicaveisPorClassificacao(idClassificacaoTributaria: number, data: string): Array<{ codigo: string; descricao: string }> {
+    return this.db
+      .prepare(
+        `SELECT DISTINCT n.NBS_CD AS codigo, n.NBS_DESCRICAO AS descricao
+         FROM NBS_APLICAVEL a
+         JOIN NBS n ON n.NBS_CD = a.NBSA_NBS_CD
+         WHERE a.NBSA_CLTR_ID = :id
+           AND :data BETWEEN a.NBSA_INICIO_VIGENCIA AND COALESCE(a.NBSA_FIM_VIGENCIA, :data)
+           AND :data BETWEEN n.NBS_INICIO_VIGENCIA AND COALESCE(n.NBS_FIM_VIGENCIA, :data)
+         ORDER BY n.NBS_CD`,
+      )
+      .all({ id: idClassificacaoTributaria, data }) as Array<{ codigo: string; descricao: string }>;
+  }
+
+  listarCodigosClassificacoesVinculadasPorNbs(nbs: string, data: string): string[] {
+    const rows = this.db
+      .prepare(
+        `SELECT DISTINCT ct.CLTR_CD AS codigo
+         FROM NBS_APLICAVEL a
+         JOIN CLASSIFICACAO_TRIBUTARIA ct ON ct.CLTR_ID = a.NBSA_CLTR_ID
+         WHERE a.NBSA_NBS_CD = :nbs
+           AND :data BETWEEN a.NBSA_INICIO_VIGENCIA AND COALESCE(a.NBSA_FIM_VIGENCIA, :data)
+           AND :data BETWEEN ct.CLTR_INICIO_VIGENCIA AND COALESCE(ct.CLTR_FIM_VIGENCIA, :data)
+         ORDER BY ct.CLTR_CD`,
+      )
+      .all({ nbs, data }) as Array<{ codigo: string }>;
+    return rows.map((r) => r.codigo);
+  }
+
+  /** Classificações de serviço sem vínculo NBS (CLTR_NOMENCLATURA LIKE '%NBS'). */
+  listarCodigosClassificacoesServicoSemVinculoNbs(data: string): string[] {
+    const rows = this.db
+      .prepare(
+        `SELECT ct.CLTR_CD AS codigo
+         FROM CLASSIFICACAO_TRIBUTARIA ct
+         WHERE ct.CLTR_NOMENCLATURA LIKE '%NBS%'
+           AND :data BETWEEN ct.CLTR_INICIO_VIGENCIA AND COALESCE(ct.CLTR_FIM_VIGENCIA, :data)
+           AND ct.CLTR_ID NOT IN (
+             SELECT n.NBSA_CLTR_ID FROM NBS_APLICAVEL n
+             WHERE :data BETWEEN n.NBSA_INICIO_VIGENCIA AND COALESCE(n.NBSA_FIM_VIGENCIA, :data)
+           )
+         ORDER BY ct.CLTR_CD`,
+      )
+      .all({ data }) as Array<{ codigo: string }>;
+    return rows.map((r) => r.codigo);
+  }
+
+  gruposDfe(data: string): Array<{ id: number; descricao: string }> {
+    return this.db
+      .prepare(
+        `SELECT GRDF_ID AS id, GRDF_DESCRICAO AS descricao FROM GRUPO_DFE
+         WHERE :data BETWEEN GRDF_INICIO_VIGENCIA AND COALESCE(GRDF_FIM_VIGENCIA, :data)
+         ORDER BY GRDF_ID`,
+      )
+      .all({ data }) as Array<{ id: number; descricao: string }>;
+  }
+
+  gruposAtor(data: string): Array<{ id: number; descricao: string; ordem: number }> {
+    return this.db
+      .prepare(
+        `SELECT GRAT_ID AS id, GRAT_DESCRICAO AS descricao, GRAT_ORDEM AS ordem FROM GRUPO_ATOR
+         WHERE :data BETWEEN GRAT_INICIO_VIGENCIA AND COALESCE(GRAT_FIM_VIGENCIA, :data)
+         ORDER BY GRAT_ORDEM`,
+      )
+      .all({ data }) as Array<{ id: number; descricao: string; ordem: number }>;
+  }
+
   // ── Versão da base ──
 
   versaoBaseDados(): { versao: string; data: string } {

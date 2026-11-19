@@ -28,6 +28,61 @@ export class BaseCalculoController {
     });
   }
 
+  /** POST /api/calculadora/base-calculo/is-mercadorias — base do Imposto Seletivo (mercadorias). */
+  @Post("is-mercadorias")
+  @HttpCode(200)
+  @ApiOperation({ summary: "Cálculo da base de cálculo do Imposto Seletivo em operações com mercadorias" })
+  calcularISMercadorias(@Body() req: Record<string, number | string>): unknown {
+    const j = (v: number | string | undefined): JBD => JBD.of(v ?? 0) ?? JBD.ZERO;
+    return calculadora().calcularISMercadorias({
+      anoFatoGerador: Number(req.anoFatoGerador),
+      valorBem: j(req.valorBem),
+      ajusteAcrescimos: j(req.ajusteAcrescimos),
+      juros: j(req.juros),
+      multas: j(req.multas),
+      encargos: j(req.encargos),
+      freteCobrado: j(req.freteCobrado),
+      outrosTributos: j(req.outrosTributos),
+      demaisImportancias: j(req.demaisImportancias),
+      icms: j(req.icms),
+      iss: j(req.iss),
+      cosip: j(req.cosip),
+      ipi: j(req.ipi),
+      descontoIncondicional: j(req.descontoIncondicional),
+      bonificacao: j(req.bonificacao),
+      devolucaoVendas: j(req.devolucaoVendas),
+    });
+  }
+
+  /** POST /api/calculadora/base-calculo/cbs-ibs-mercadorias — base de CBS/IBS (mercadorias). */
+  @Post("cbs-ibs-mercadorias")
+  @HttpCode(200)
+  @ApiOperation({ summary: "Cálculo da base de cálculo de CBS e IBS em operações com mercadorias" })
+  calcularCibs(@Body() req: Record<string, number | string>): unknown {
+    const j = (v: number | string | undefined): JBD => JBD.of(v ?? 0) ?? JBD.ZERO;
+    return calculadora().calcularCibs({
+      anoFatoGerador: Number(req.anoFatoGerador),
+      valorBem: j(req.valorBem),
+      ajusteAcrescimos: j(req.ajusteAcrescimos),
+      juros: j(req.juros),
+      multas: j(req.multas),
+      encargos: j(req.encargos),
+      frete: j(req.frete),
+      impostoSeletivo: j(req.impostoSeletivo),
+      outrosTributos: j(req.outrosTributos),
+      demaisImportancias: j(req.demaisImportancias),
+      icms: j(req.icms),
+      iss: j(req.iss),
+      pis: j(req.pis),
+      pisImportacao: j(req.pisImportacao),
+      cofins: j(req.cofins),
+      cofinsImportacao: j(req.cofinsImportacao),
+      cosip: j(req.cosip),
+      ipi: j(req.ipi),
+      descontoIncondicional: j(req.descontoIncondicional),
+    });
+  }
+
   /** POST /api/calculadora/base-calculo/base-calculo-unificada-nfse */
   @Post("base-calculo-unificada-nfse")
   @HttpCode(200)

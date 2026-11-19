@@ -189,6 +189,201 @@ export class DadosAbertosService {
       .all({ data });
   }
 
+  ncmVigentes(data: string) {
+    return this.db
+      .prepare(
+        `SELECT NCM_CD AS codigo, NCM_DESCRICAO AS descricao FROM NCM
+         WHERE :data BETWEEN NCM_INICIO_VIGENCIA AND COALESCE(NCM_FIM_VIGENCIA, :data)
+         ORDER BY NCM_CD`,
+      )
+      .all({ data });
+  }
+
+  listarNbs(data: string) {
+    return this.db
+      .prepare(
+        `SELECT NBS_CD AS codigo, NBS_DESCRICAO AS descricao FROM NBS
+         WHERE :data BETWEEN NBS_INICIO_VIGENCIA AND COALESCE(NBS_FIM_VIGENCIA, :data)
+         ORDER BY NBS_CD`,
+      )
+      .all({ data });
+  }
+
+  nbsAplicaveisPorClassificacao(cClassTrib: string, data: string) {
+    const cl = this.db
+      .prepare(
+        `SELECT ct.CLTR_ID AS id, ct.CLTR_NOMENCLATURA AS nomenclatura
+         FROM CLASSIFICACAO_TRIBUTARIA ct
+         WHERE ct.CLTR_CD = :codigo AND :data BETWEEN ct.CLTR_INICIO_VIGENCIA AND COALESCE(ct.CLTR_FIM_VIGENCIA, :data)
+         LIMIT 1`,
+      )
+      .get({ codigo: cClassTrib, data }) as { id: number; nomenclatura: string | null } | undefined;
+    if (!cl) return [];
+    if (!(cl.nomenclatura ?? "").includes("NBS")) return [];
+    const temVinculo = (
+      this.db.prepare(`SELECT EXISTS (SELECT 1 FROM NBS_APLICAVEL WHERE NBSA_CLTR_ID = :id) AS ok`).get({ id: cl.id }) as { ok: number }
+    ).ok;
+    if (!temVinculo) return this.listarNbs(data);
+    return this.db
+      .prepare(
+        `SELECT DISTINCT n.NBS_CD AS codigo, n.NBS_DESCRICAO AS descricao
+         FROM NBS_APLICAVEL a JOIN NBS n ON n.NBS_CD = a.NBSA_NBS_CD
+         WHERE a.NBSA_CLTR_ID = :id
+           AND :data BETWEEN a.NBSA_INICIO_VIGENCIA AND COALESCE(a.NBSA_FIM_VIGENCIA, :data)
+         ORDER BY n.NBS_CD`,
+      )
+      .all({ id: cl.id, data });
+  }
+
+  aliquotaDadosAbertos(idTributo: number, codigoUf: number | null, codigoMunicipio: number | null, data: string) {
+    const row = this.db
+      .prepare(
+        `SELECT r.ALRE_VALOR AS ref, p.ALPA_VALOR AS padr, p.ALPA_FORMA_APLICACAO AS forma
+         FROM ALIQUOTA_REFERENCIA r
+         LEFT JOIN ALIQUOTA_PADRAO p ON p.ALPA_ALRE_ID = r.ALRE_ID
+           AND ((:mun IS NULL AND p.ALPA_MUNI_CD IS NULL) OR (:mun IS NOT NULL AND p.ALPA_MUNI_CD = :mun))
+           AND ((:uf IS NULL AND p.ALPA_UF_CD IS NULL) OR (:uf IS NOT NULL AND p.ALPA_UF_CD = :uf))
+           AND p.ALPA_INICIO_VIGENCIA <= :data AND (p.ALPA_FIM_VIGENCIA IS NULL OR p.ALPA_FIM_VIGENCIA >= :data)
+         WHERE r.ALRE_TBTO_ID = :id AND r.ALRE_INICIO_VIGENCIA <= :data
+           AND (r.ALRE_FIM_VIGENCIA IS NULL OR r.ALRE_FIM_VIGENCIA >= :data)
+         LIMIT 1`,
+      )
+      .get({ mun: codigoMunicipio, uf: codigoUf, data, id: idTributo }) as
+      | { ref: number; padr: number | null; forma: string | null }
+      | undefined;
+    if (!row) return { aliquotaReferencia: null, aliquotaPropria: null, formaAplicacao: null };
+    return {
+      aliquotaReferencia: String(row.ref),
+      aliquotaPropria: row.padr !== null ? String(row.padr) : null,
+      formaAplicacao: row.forma,
+    };
+  }
+
+  gruposDfe(data: string) {
+    return this.db
+      .prepare(
+        `SELECT GRDF_ID AS id, GRDF_DESCRICAO AS descricao FROM GRUPO_DFE
+         WHERE :data BETWEEN GRDF_INICIO_VIGENCIA AND COALESCE(GRDF_FIM_VIGENCIA, :data) ORDER BY GRDF_ID`,
+      )
+      .all({ data });
+  }
+
+  gruposAtor(data: string) {
+    return this.db
+      .prepare(
+        `SELECT GRAT_ID AS id, GRAT_DESCRICAO AS descricao, GRAT_ORDEM AS ordem FROM GRUPO_ATOR
+         WHERE :data BETWEEN GRAT_INICIO_VIGENCIA AND COALESCE(GRAT_FIM_VIGENCIA, :data) ORDER BY GRAT_ORDEM`,
+      )
+      .all({ data });
+  }
+
+  classificacoesAplicaveisPorNbs(nbs: string, data: string) {
+    const existe = (
+      this.db
+        .prepare(
+          `SELECT EXISTS (SELECT 1 FROM NBS WHERE NBS_CD = :nbs AND :data BETWEEN NBS_INICIO_VIGENCIA AND COALESCE(NBS_FIM_VIGENCIA, :data)) AS ok`,
+        )
+        .get({ nbs, data }) as { ok: number }
+    ).ok;
+    if (!existe) {
+      const erro = new Error(`NBS de código ${nbs} não encontrada para a data ${data}`);
+      erro.name = "NbsNaoEncontradaException";
+      throw erro;
+    }
+    const vinculadas = (
+      this.db
+        .prepare(
+          `SELECT DISTINCT ct.CLTR_CD AS codigo
+           FROM NBS_APLICAVEL a JOIN CLASSIFICACAO_TRIBUTARIA ct ON ct.CLTR_ID = a.NBSA_CLTR_ID
+           WHERE a.NBSA_NBS_CD = :nbs AND :data BETWEEN a.NBSA_INICIO_VIGENCIA AND COALESCE(a.NBSA_FIM_VIGENCIA, :data)
+           ORDER BY ct.CLTR_CD`,
+        )
+        .all({ nbs, data }) as Array<{ codigo: string }>
+    ).map((r) => r.codigo);
+    const semVinculo = (
+      this.db
+        .prepare(
+          `SELECT ct.CLTR_CD AS codigo FROM CLASSIFICACAO_TRIBUTARIA ct
+           WHERE ct.CLTR_NOMENCLATURA LIKE '%NBS%'
+             AND :data BETWEEN ct.CLTR_INICIO_VIGENCIA AND COALESCE(ct.CLTR_FIM_VIGENCIA, :data)
+             AND ct.CLTR_ID NOT IN (
+               SELECT n.NBSA_CLTR_ID FROM NBS_APLICAVEL n
+               WHERE :data BETWEEN n.NBSA_INICIO_VIGENCIA AND COALESCE(n.NBSA_FIM_VIGENCIA, :data))
+           ORDER BY ct.CLTR_CD`,
+        )
+        .all({ data }) as Array<{ codigo: string }>
+    ).map((r) => r.codigo);
+    return [...vinculadas, ...semVinculo];
+  }
+
+  detalheClassificacao(cClassTrib: string, idTributo: number, data: string) {
+    const row = this.db
+      .prepare(
+        `SELECT ct.CLTR_ID AS id, ct.CLTR_CD AS codigo, ct.CLTR_DESCRICAO AS descricao,
+                ct.CLTR_TIPO_ALIQUOTA AS tipoAliquota, ct.CLTR_NOMENCLATURA AS nomenclatura,
+                tt.TRTR_DESCRICAO AS descricaoTratamento,
+                tt.TRTR_IN_INCOMPATIVEL_COM_SUSPENSAO AS incompativelSuspensao,
+                tt.TRTR_IN_EXIGE_GRUPO_DESONERACAO AS exigeDesoneracao,
+                tt.TRTR_IN_POSSUI_PERCENTUAL_REDUCAO AS possuiReducao,
+                ct.CLTR_DATA_ATUALIZACAO AS dataAtualizacao
+         FROM CLASSIFICACAO_TRIBUTARIA ct
+         JOIN TRATAMENTO_CLASSIFICACAO tc ON tc.TRCL_CLTR_ID = ct.CLTR_ID
+         JOIN TRATAMENTO_TRIBUTARIO tt ON tt.TRTR_ID = tc.TRCL_TRTR_ID
+         WHERE ct.CLTR_CD = :codigo
+           AND :data BETWEEN tc.TRCL_INICIO_VIGENCIA AND COALESCE(tc.TRCL_FIM_VIGENCIA, :data)
+           AND :data BETWEEN tt.TRTR_INICIO_VIGENCIA AND COALESCE(tt.TRTR_FIM_VIGENCIA, :data)
+         LIMIT 1`,
+      )
+      .get({ codigo: cClassTrib, data }) as Record<string, unknown> | undefined;
+    if (!row) return null;
+    const tipos = this.db
+      .prepare(
+        `SELECT td.TPDF_TIPO AS tipo, td.TPDF_SIGLA AS sigla, td.TPDF_DESCRICAO AS descricao
+         FROM TIPO_DFE_CLASSIFICACAO tdc JOIN TIPO_DFE td ON td.TPDF_ID = tdc.TDCL_TPDF_ID
+         WHERE tdc.TDCL_CLTR_ID = :id AND :data BETWEEN tdc.TDCL_INICIO_VIGENCIA AND COALESCE(tdc.TDCL_FIM_VIGENCIA, :data)
+         ORDER BY td.TPDF_TIPO`,
+      )
+      .all({ id: row.id, data });
+    return {
+      codigo: row.codigo,
+      descricao: row.descricao,
+      tipoAliquota: row.tipoAliquota,
+      nomenclatura: row.nomenclatura,
+      descricaoTratamentoTributario: row.descricaoTratamento,
+      incompativelComSuspensao: Number(row.incompativelSuspensao ?? 0) !== 0,
+      exigeGrupoDesoneracao: Number(row.exigeDesoneracao ?? 0) !== 0,
+      possuiPercentualReducao: Number(row.possuiReducao ?? 0) !== 0,
+      tiposDfeClassificacao: tipos,
+      dataAtualizacao: row.dataAtualizacao ?? null,
+    };
+  }
+
+  async validarNcmAplicavel(cClassTrib: string, ncm: string, data: string) {
+    const cl = this.db
+      .prepare(
+        `SELECT ct.CLTR_ID AS id, ct.CLTR_NOMENCLATURA AS nomenclatura
+         FROM CLASSIFICACAO_TRIBUTARIA ct
+         WHERE ct.CLTR_CD = :codigo AND :data BETWEEN ct.CLTR_INICIO_VIGENCIA AND COALESCE(ct.CLTR_FIM_VIGENCIA, :data)
+         LIMIT 1`,
+      )
+      .get({ codigo: cClassTrib, data }) as { id: number; nomenclatura: string | null } | undefined;
+    if (!cl) return { cClassTrib, ncm, valido: false };
+    const temClassificacao = (
+      this.db
+        .prepare(`SELECT EXISTS (SELECT 1 FROM NCM_APLICAVEL WHERE NCMA_CLTR_ID = :id AND :data BETWEEN NCMA_INICIO_VIGENCIA AND COALESCE(NCMA_FIM_VIGENCIA, :data)) AS ok`)
+        .get({ id: cl.id, data }) as { ok: number }
+    ).ok;
+    if (!temClassificacao) return { cClassTrib, ncm, valido: true };
+    const vinculado = (
+      this.db
+        .prepare(
+          `SELECT EXISTS (SELECT 1 FROM NCM_APLICAVEL WHERE NCMA_NCM_CD = SUBSTRING(:ncm, 1, LENGTH(NCMA_NCM_CD)) AND NCMA_CLTR_ID = :id AND :data BETWEEN NCMA_INICIO_VIGENCIA AND COALESCE(NCMA_FIM_VIGENCIA, :data)) AS ok`,
+        )
+        .get({ ncm, id: cl.id, data }) as { ok: number }
+    ).ok;
+    return { cClassTrib, ncm, valido: vinculado === 1 };
+  }
+
   tiposDfe(data: string) {
     return this.db
       .prepare(

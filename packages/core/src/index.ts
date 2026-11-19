@@ -48,6 +48,11 @@ import {
   type NfseValidacaoIndicadorOperacaoInput,
 } from "./services/nfse.js";
 import { PedagioService, type PedagioInput } from "./services/pedagio.js";
+import {
+  BaseCalculoMercadoriasService,
+  type BaseCalculoCibsInput,
+  type BaseCalculoISMercadoriasInput,
+} from "./services/basecalculo-mercadorias.js";
 import { parseComponentes, parseOperacao } from "./validation.js";
 import { ErroGenericoValidacaoException } from "./errors.js";
 import { objetoJson, serializarOper, serializarROC, totaisJson } from "./serialize.js";
@@ -69,6 +74,7 @@ export class Calculadora {
   readonly nfseService: NfseService;
   readonly baseCalculoUnificadaNfseService: BaseCalculoUnificadaNfseService;
   readonly pedagioService: PedagioService;
+  readonly baseCalculoMercadoriasService: BaseCalculoMercadoriasService;
 
   private constructor(dbPath: string, opts: Required<CalculadoraOptions>) {
     this.repos = new Repositories(dbPath);
@@ -163,9 +169,11 @@ export class Calculadora {
     this.nfseService = new NfseService(this.repos);
     this.baseCalculoUnificadaNfseService = new BaseCalculoUnificadaNfseService();
     this.pedagioService = new PedagioService(aliquotaPadraoService, ufService, municipioService);
+    this.baseCalculoMercadoriasService = new BaseCalculoMercadoriasService();
     this.nfseService = new NfseService(this.repos);
     this.baseCalculoUnificadaNfseService = new BaseCalculoUnificadaNfseService();
     this.pedagioService = new PedagioService(aliquotaPadraoService, ufService, municipioService);
+    this.baseCalculoMercadoriasService = new BaseCalculoMercadoriasService();
   }
 
   static create(dbPath: string, opts: CalculadoraOptions = {}): Calculadora {
@@ -226,6 +234,16 @@ export class Calculadora {
   /** POST /calculadora/pedagio — CBS/IBS por praça. */
   calcularPedagio(input: PedagioInput): Record<string, unknown> {
     return this.pedagioService.calcularCIBS(input);
+  }
+
+  /** POST /calculadora/base-calculo/is-mercadorias. */
+  calcularISMercadorias(input: BaseCalculoISMercadoriasInput): Record<string, unknown> {
+    return this.baseCalculoMercadoriasService.calcularISMercadorias(input);
+  }
+
+  /** POST /calculadora/base-calculo/cbs-ibs-mercadorias. */
+  calcularCibs(input: BaseCalculoCibsInput): Record<string, unknown> {
+    return this.baseCalculoMercadoriasService.calcularCibs(input);
   }
 
   versaoBase(): { versao: string; data: string } {
