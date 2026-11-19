@@ -1,0 +1,111 @@
+/**
+ * Worker de borda da Calculadora RTC (Cloudflare).
+ *
+ * O front (apps/playground/dist) é servido pela camada de Static Assets;
+ * o que chega aqui é /api/* e é proxyado para o container da API NestJS
+ * (Dockerfile da raiz), gerenciado pelo Durable Object abaixo.
+ *
+ * Adaptado do template oficial cloudflare/templates/containers-template
+ * (sem pool/lb — uma única instância serve toda a API).
+ */
+import { DurableObject } from "cloudflare:workers";
+
+const PORT = 8080;
+
+/** Container dorme após este período sem tráfego (a 1ª chamada seguinte paga o boot). */
+const INACTIVITY_TIMEOUT_MS = 10 * 60 * 1000;
+
+/** Nome estável → o hash determinístico garante uma única instância global. */
+const INSTANCE_NAME = "calculadora";
+
+/** Sonda de prontidão: GET leve (1 query SQLite) que valida servidor + banco. */
+const HEALTH_PATH = "/api/calculadora/versao";
+
+export interface Env {
+  CONTAINER: DurableObjectNamespace<CalculadoraContainer>;
+}
+
+export default {
+  async fetch(request: Request, env: Env): Promise<Response> {
+    const url = new URL(request.url);
+    if (!url.pathname.startsWith("/api/")) {
+      // Assets já resolveram antes do Worker; aqui só deveria chegar /api/*.
+      return new Response("Não encontrado", { status: 404 });
+    }
+    return env.CONTAINER.getByName(INSTANCE_NAME).fetch(request);
+  },
+} satisfies ExportedHandler<Env>;
+
+export class CalculadoraContainer extends DurableObject {
+  /** Startup compartilhado entre requests concorrentes. */
+  private starting?: Promise<void>;
+  private monitoring = false;
+
+  constructor(ctx: DurableObjectState, env: Env) {
+    super(ctx, env);
+    // Reinício do DO com o container ainda de pé: restaura timeout e monitor.
+    this.ctx.blockConcurrencyWhile(async () => {
+      const container = this.ctx.container;
+      if (container?.running) {
+        container.setInactivityTimeout(INACTIVITY_TIMEOUT_MS);
+        this.observeExit();
+      }
+    });
+  }
+
+  override async fetch(request: Request): Promise<Response> {
+    await (this.starting ??= this.start());
+
+    const url = new URL(request.url);
+    url.protocol = "http:";
+    url.host = "container";
+    const forwarded = new Request(url, request);
+    forwarded.headers.delete("host");
+    return this.ctx.container!.getTcpPort(PORT).fetch(forwarded);
+  }
+
+  private async start(): Promise<void> {
+    try {
+      const container = this.ctx.container!;
+      container.start({
+        image: container.images.base,
+        instance: "lite",
+        enableInternet: false, // banco e XSDs vêm na imagem; nada a acessar fora
+      });
+      container.setInactivityTimeout(INACTIVITY_TIMEOUT_MS);
+      this.observeExit();
+
+      // "running" só significa que o start foi pedido — espera o HTTP responder.
+      for (let attempt = 0; attempt < 100; attempt++) {
+        try {
+          const probe = await container
+            .getTcpPort(PORT)
+            .fetch(`http://container${HEALTH_PATH}`, {
+              signal: AbortSignal.timeout(1000),
+            });
+          if (probe.ok) return;
+        } catch {
+          // porta ainda não escutando — tenta de novo em 200ms
+        }
+        await new Promise((resolve) => setTimeout(resolve, 200));
+      }
+      throw new Error(`Container não ficou pronto na porta ${PORT} (${HEALTH_PATH})`);
+    } finally {
+      // Falha de startup libera o lock para retry na próxima request.
+      this.starting = undefined;
+    }
+  }
+
+  private observeExit(): void {
+    if (this.monitoring) return;
+    this.monitoring = true;
+    // monitor() resolve quando o container sai; waitUntil segura o DO enquanto
+    // há uma saída pendente de observar (padrão do template oficial).
+    this.ctx.waitUntil(
+      this.ctx.container!.monitor().then(
+        () => console.log("Container da Calculadora RTC finalizou."),
+        (err: unknown) => console.error("Container finalizou com erro:", err),
+      ),
+    );
+  }
+}
