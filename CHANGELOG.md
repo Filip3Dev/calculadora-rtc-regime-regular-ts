@@ -2,6 +2,17 @@
 
 Notáveis mudanças deste projeto serão documentadas aqui. O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e o versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
+## [0.4.1] — 2026-11-19
+
+### Adicionado
+
+- **CI (GitHub Actions)**: a cada push/PR — checkout dos fixtures de paridade do
+  repositório Java oficial (sparse-checkout de `src/test/resources` → `JAVA_FIXTURES`),
+  `libxml2-utils` para a validação XSD dos XMLs, `pnpm db:build` + build + typecheck e os
+  **66 testes com a API de pé** (49 do core — incluindo os golden de paridade, que rodam
+  contra os gabaritos oficiais — e 17 e2e HTTP), com teardown e log da API em falha.
+  Badge de status no README.
+
 ## [0.4.0] — 2026-11-19
 
 ### Adicionado
