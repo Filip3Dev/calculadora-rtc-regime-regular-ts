@@ -16,7 +16,7 @@ O motor reproduz o cálculo oficial com **paridade estrita de saída** — mesmo
 
 **Destaques deste porte:**
 
-- ⚖️ **Paridade comprovada** — regressão oficial de 262 objetos e cenários de compra governamental passam campo a campo
+- ⚖️ **Paridade comprovada** — regressão oficial de 262 objetos e 12 cenários de compra governamental (regime-geral + observabilidade) passam campo a campo
 - 🚫☕ **Sem Java** — o banco SQLite oficial é gerado por um *runner* TypeScript a partir dos mesmos scripts Flyway do original
 - 🖥️ **Playground web incluso** — monte a operação, calcule e veja a memória de cálculo por tributo
 - 🧩 **Geração e validação de XML** do grupo RTC para 7 tipos de DF-e, contra os XSDs oficiais da SEFAZ
@@ -112,7 +112,7 @@ O ponto de partida foi a leitura sistemática do código-fonte Java do projeto o
 
 4. **Porte fiel dos serviços.** A cadeia `CalculadoraService → ProcessamentoItemService → CalculoTributoService → CalculoCbsIbsService/CalculoImpostoSeletivoService` foi portada método a método, com os SQLs nativos dos repositórios JPA copiados para *prepared statements* (incluindo o vínculo NCM↔cClassTrib por **prefixo** e a lógica de exceções dos anexos). Os geradores de XML seguem os `propOrder` dos modelos JAXB e a saída do `XmlWriter` é compatível com `JAXB_FORMATTED_OUTPUT`. Comportamentos questionáveis do original — o bug do diferimento (o tributo devido deriva do calculado, não da expressão própria) e a base negativa zerada em silêncio — são **reproduzidos fielmente** e marcados no código com `// PARITY:`.
 
-5. **Paridade demonstrada, não presumida.** Os *golden tests* carregam os fixtures oficiais de entrada e os gabaritos de saída do repositório Java e comparam campo a campo — incluindo o teste de regressão com **262 objetos** e os cenários de compra governamental (União, Estado, Município), excluindo apenas `memoriaCalculo`/`calculoSimulado`, exatamente como o teste original exclui. Os XMLs gerados são todos validados contra os `grupo.xsd` oficiais nos testes.
+5. **Paridade demonstrada, não presumida.** Os *golden tests* carregam os fixtures oficiais de entrada e os gabaritos de saída do repositório Java e comparam campo a campo — incluindo o teste de regressão com **262 objetos** e os 12 cenários de compra governamental (regime-geral e observabilidade, cobrindo União, Estado, DF, Município, Consórcio e Comitê Gestor), excluindo apenas `memoriaCalculo`/`calculoSimulado`, exatamente como o teste original exclui. Os XMLs gerados são todos validados contra os `grupo.xsd` oficiais nos testes. Foi assim que o golden de observabilidade encontrou — e o porte corrigiu — uma equivalência sutil do original: Consórcio Público e Comitê Gestor do IBS são tratados como Município no rateio da compra governamental (`tipoEnteEquivalente`).
 
 ---
 
@@ -129,7 +129,7 @@ O ponto de partida foi a leitura sistemática do código-fonte Java do projeto o
 | Geração/validação XML | JAXB + XSD | `XmlWriter` JAXB-compatível + [xmllint](http://xmlsoft.org/xmllint.html) (libxml2) + os mesmos XSDs SEFAZ |
 | Cache | Caffeine (~50 caches) | LRU+TTL equivalente |
 | Frontend | — | [React 19](https://react.dev/) + [Vite 7](https://vite.dev/) |
-| Testes | JUnit 5 + JaCoCo | [Vitest](https://vitest.dev/) (42 unitários/golden + 14 e2e) |
+| Testes | JUnit 5 + JaCoCo | [Vitest](https://vitest.dev/) (49 unitários/golden + 17 e2e) |
 | Distribuição | JAR + banco | Docker (3 estágios) / pnpm |
 
 ---

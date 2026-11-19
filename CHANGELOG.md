@@ -2,33 +2,6 @@
 
 Notáveis mudanças deste projeto serão documentadas aqui. O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e o versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
-## [0.2.1] — 2026-11-19
-
-### Adicionado
-
-- **Deploy Cloudflare** (`pnpm deploy:cloudflare`, domínio próprio **rtc.bitpag.xyz** via
-  Custom Domain no `wrangler.jsonc`): Worker de borda em `deploy/edge/` que serve o
-  playground como Static Assets e proxya `/api/*` para a API em um
-  [Cloudflare Container](https://developers.cloudflare.com/containers/) gerenciado por
-  Durable Object (sonda de prontidão em `/api/calculadora/versao`, sleep após 10 min de
-  inatividade, `instance: lite`, sem internet de saída). URL única em
-  `https://calculadora-rtc.<subdominio>.workers.dev`.
-
-### Corrigido
-
-- **Dockerfile buildava com falha**: faltavam `COPY` de `apps/api/node_modules` e
-  `packages/core/node_modules` (resolução do linker isolado do pnpm), o estágio db usava
-  `--ignore-scripts` (impedia o binding nativo do better-sqlite3) e o estágio build não
-  copiava `apps/playground/package.json`. Pnpm pinado em `packageManager` (o corepack da
-  imagem entregava pnpm 12 ≠ host 10) e allowlist `onlyBuiltDependencies` movida para
-  `pnpm-workspace.yaml`; `FROM` pinados em `linux/amd64` (exigência do Containers);
-  criado `.dockerignore`.
-- Worker de borda: corrida `start()` × hibernação do Durable Object ("start() cannot be
-  called on a container that is already running", erro 1101 após o DO acordar) — o start
-  agora é guardado por `running` + tolerante à corrida, com flag `ready` para não re-sondar
-  requests quentes. Script renomeado para `deploy:cloudflare` (`pnpm deploy` é comando
-  nativo do pnpm e captura o comando antes do script).
-
 ## [0.3.0] — 2026-11-19
 
 ### Adicionado
@@ -56,6 +29,33 @@ Notáveis mudanças deste projeto serão documentadas aqui. O formato segue [Kee
   o porte comparava os códigos crus e zerava o IBS-Mun nesses casos.
 - Serializador de observabilidade omitindo chaves `undefined` (NON_NULL), alinhado ao regime-geral.
 - Endpoints de classificação por CST: valor via path param (antes lido como query, retornando vazio).
+
+## [0.2.1] — 2026-11-19
+
+### Adicionado
+
+- **Deploy Cloudflare** (`pnpm deploy:cloudflare`, domínio próprio **rtc.bitpag.xyz** via
+  Custom Domain no `wrangler.jsonc`): Worker de borda em `deploy/edge/` que serve o
+  playground como Static Assets e proxya `/api/*` para a API em um
+  [Cloudflare Container](https://developers.cloudflare.com/containers/) gerenciado por
+  Durable Object (sonda de prontidão em `/api/calculadora/versao`, sleep após 10 min de
+  inatividade, `instance: lite`, sem internet de saída). URL única em
+  `https://calculadora-rtc.<subdominio>.workers.dev`.
+
+### Corrigido
+
+- **Dockerfile buildava com falha**: faltavam `COPY` de `apps/api/node_modules` e
+  `packages/core/node_modules` (resolução do linker isolado do pnpm), o estágio db usava
+  `--ignore-scripts` (impedia o binding nativo do better-sqlite3) e o estágio build não
+  copiava `apps/playground/package.json`. Pnpm pinado em `packageManager` (o corepack da
+  imagem entregava pnpm 12 ≠ host 10) e allowlist `onlyBuiltDependencies` movida para
+  `pnpm-workspace.yaml`; `FROM` pinados em `linux/amd64` (exigência do Containers);
+  criado `.dockerignore`.
+- Worker de borda: corrida `start()` × hibernação do Durable Object ("start() cannot be
+  called on a container that is already running", erro 1101 após o DO acordar) — o start
+  agora é guardado por `running` + tolerante à corrida, com flag `ready` para não re-sondar
+  requests quentes. Script renomeado para `deploy:cloudflare` (`pnpm deploy` é comando
+  nativo do pnpm e captura o comando antes do script).
 
 ## [0.2.0] — 2026-11-19
 

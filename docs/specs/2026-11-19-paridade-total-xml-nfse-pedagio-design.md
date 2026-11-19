@@ -1,6 +1,6 @@
 # Design — Paridade total: geração XML, NFS-e, pedágio e dados abertos
 
-**Data**: 2026-11-19 · **Status**: aprovado · **Escopo**: fases 1–3 abaixo
+**Data**: 2026-11-19 · **Status**: ✅ implementado (v0.2.0–v0.3.0) · **Escopo**: fases 1–3 abaixo
 
 ## Objetivo
 
