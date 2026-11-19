@@ -9,7 +9,7 @@
   },
   "packageManager": "pnpm@10.28.2",
   "scripts": {
-    "build": "pnpm --filter @rtc/core build && pnpm --filter @rtc/api build",
+    "build": "pnpm --filter calculadora-rtc-core build && pnpm --filter @rtc/api build",
     "test": "pnpm -r test",
     "db:build": "tsx packages/core/scripts/build-db.ts",
     "dev:api": "pnpm --filter @rtc/api dev",
