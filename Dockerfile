@@ -30,6 +30,7 @@ FROM --platform=linux/amd64 node:22-slim AS run
 RUN apt-get update && apt-get install -y --no-install-recommends libxml2-utils && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 ENV NODE_ENV=production PORT=8080
+COPY --from=build /app/package.json ./package.json
 COPY --from=build /app/node_modules ./node_modules
 # node_modules dos pacotes: no linker isolado do pnpm, @nestjs/* (apps/api) e
 # better-sqlite3/decimal.js (packages/core) só resolvem via estes symlinks

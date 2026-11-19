@@ -7,7 +7,7 @@ import { ProblemDetailFilter } from "./problem-detail.filter.js";
 import { calculadora } from "./calc.provider.js";
 import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
-const VERSAO_APP: string = require("../package.json").version ?? "0.0.0";
+const VERSAO_APP: string = require("../package.json").version ?? "0.0.0"; // apps/api/package.json (presente na imagem Docker)
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, { logger: ["log", "warn", "error"] });
