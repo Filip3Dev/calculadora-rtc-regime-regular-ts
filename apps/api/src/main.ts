@@ -23,7 +23,7 @@ async function bootstrap(): Promise<void> {
         "do Consumo — LC 214/2025) nas operações do regime regular. Porte TypeScript com paridade " +
         "estrita de saída com a API oficial (Receita Federal/SERPRO).",
     )
-    .setVersion("0.1.0")
+    .setVersion(process.env.npm_package_version ?? "0.3.0")
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup("api/swagger", app, document);

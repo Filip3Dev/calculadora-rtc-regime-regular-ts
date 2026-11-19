@@ -9,11 +9,14 @@
   // Domínio próprio (cria o registro DNS + certificado no deploy).
   "routes": [{ "pattern": "rtc.bitpag.xyz", "custom_domain": true }],
 
-  // /api/* não casa com asset algum → cai no Worker; demais caminhos 404
-  // do Worker caem no fallback SPA (index.html).
+  // run_worker_first: navegações a /api/* (ex.: /api/swagger) precisam chegar
+  // ao Worker ANTES do fallback SPA — sem isso, o Static Assets serve o
+  // index.html do playground para qualquer documento que não casa com asset.
+  // Demais caminhos seguem servindo assets + fallback SPA normalmente.
   "assets": {
     "directory": "../../apps/playground/dist",
-    "not_found_handling": "single-page-application"
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
   },
 
   "containers": [
