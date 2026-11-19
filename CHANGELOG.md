@@ -20,6 +20,14 @@ Notáveis mudanças deste projeto serão documentadas aqui. O formato segue [Kee
 - **Golden tests de observabilidade**: os 6 cenários oficiais de compra
   governamental (`*_output_observabilidade.json`) agora comparam estado do item,
   tributos e totais campo a campo — inclusive um cenário com erro REG-002.
+- **[docs/exemplos.md](docs/exemplos.md)**: exemplos completos de utilização com
+  entradas e saídas REAIS capturadas desta API (observabilidade 1:1 com o
+  exemplo oficial, base unificada 870/840/1060 idem), incluindo pedágio e NFS-e;
+  linkado no README, como no projeto original.
+- **Swagger enriquecido**: `@ApiBody` com exemplo válido e respostas 200/422
+  (ProblemDetail com código/campo/estadoItem) nos principais POSTs — antes os
+  corpos não eram documentados (controllers aceitam JSON flexível). Versão do
+  documento lida do package.json.
 
 ### Corrigido
 
@@ -29,6 +37,13 @@ Notáveis mudanças deste projeto serão documentadas aqui. O formato segue [Kee
   o porte comparava os códigos crus e zerava o IBS-Mun nesses casos.
 - Serializador de observabilidade omitindo chaves `undefined` (NON_NULL), alinhado ao regime-geral.
 - Endpoints de classificação por CST: valor via path param (antes lido como query, retornando vazio).
+- **Deploy**: `/api/*` em navegações caíam no fallback SPA do Static Assets antes
+  do Worker (`/api/swagger` abria o playground no navegador); fix com
+  `run_worker_first: ["/api/*"]` no wrangler.jsonc.
+- **Base unificada**: componentes agora aceitos ACHATADOS no nível raiz
+  (`@JsonUnwrapped` do original; aninhado segue valendo) e `natureza` aceita
+  `bem`/`servico` em qualquer caixa — com isso o exemplo oficial retorna
+  exatamente 870/840/1060.
 
 ## [0.2.1] — 2026-11-19
 

@@ -1,5 +1,6 @@
 # Calculadora de Tributos RTC — Regime Regular (TypeScript)
 
+[![Release](https://img.shields.io/github/v/release/Filip3Dev/calculadora-rtc-regime-regular-ts?include_prereleases&sort=semver)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Node](https://img.shields.io/badge/node-%E2%89%A522-339933.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6.svg)
@@ -213,7 +214,15 @@ pnpm dev:web
 
 O playground estará disponível em `http://localhost:5173`: exemplos prontos, modos fail-fast e observabilidade, totais, cartões por tributo com memória de cálculo e visualização dos erros `REG`/`CAL` por item.
 
-### 7. Docker (alternativa)
+### 7. Deploy (Cloudflare)
+
+```bash
+pnpm deploy:cloudflare
+```
+
+Publica o Worker de borda (`deploy/edge/`) que serve o playground como Static Assets e proxya `/api/*` para a API em um container gerenciado por Durable Object (sonda de prontidão, sleep após 10 min de inatividade). É o deploy usado em **rtc.bitpag.xyz**. Nota: após um deploy, o container em execução troca para a imagem nova no próximo ciclo de inatividade (até ~10 min).
+
+### 8. Docker (alternativa)
 
 ```bash
 docker build -t calculadora-rtc-regime-regular-ts .
