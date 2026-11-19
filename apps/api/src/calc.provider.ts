@@ -1,7 +1,7 @@
 /**
- * Provedor singleton da Calculadora (motor @rtc/core) para a API.
+ * Provedor singleton da Calculadora (motor calculadora-rtc-core) para a API.
  */
-import { CATALOGO_ERROS, Calculadora } from "@rtc/core";
+import { CATALOGO_ERROS, Calculadora } from "calculadora-rtc-core";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 

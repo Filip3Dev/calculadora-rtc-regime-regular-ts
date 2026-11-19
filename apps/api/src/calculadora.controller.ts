@@ -6,7 +6,7 @@ import { BadRequestException, Body, Controller, Get, HttpCode, Post, Query } fro
 import { ApiOperation, ApiTags } from "@nestjs/swagger";
 import { CATALOGO_ERROS, calculadora } from "./calc.provider.js";
 import { BodyExemplo, OPERACAO_OBSERVABILIDADE, OPERACAO_SIMPLES, RespostaOk, RespostaProblem422 } from "./swagger-exemplos.js";
-import { parseOperacao, validarOperacaoRequest } from "@rtc/core";
+import { parseOperacao, validarOperacaoRequest } from "calculadora-rtc-core";
 
 @ApiTags("calculadora")
 @Controller("calculadora")

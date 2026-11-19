@@ -8,3 +8,6 @@ coverage/
 .vite/
 .wrangler/
 .dev.vars
+
+# db pré-gerado embutido no pacote npm (via prepack)
+packages/core/db/

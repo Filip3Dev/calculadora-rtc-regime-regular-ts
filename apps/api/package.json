@@ -1,7 +1,7 @@
 {
   "name": "@rtc/api",
-  "version": "0.4.2",
-  "description": "API REST da Calculadora RTC (LC 214/2025) — NestJS sobre o motor @rtc/core",
+  "version": "0.4.3",
+  "description": "API REST da Calculadora RTC (LC 214/2025) — NestJS sobre o motor calculadora-rtc-core",
   "private": true,
   "type": "module",
   "main": "dist/main.js",
@@ -17,7 +17,7 @@
     "@nestjs/core": "^11.0.0",
     "@nestjs/platform-express": "^11.0.0",
     "@nestjs/swagger": "^11.0.0",
-    "@rtc/core": "workspace:*",
+    "calculadora-rtc-core": "workspace:*",
     "better-sqlite3": "^12.0.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.0"

@@ -1,5 +1,5 @@
 /**
- * @rtc/core — Motor de cálculo CBS/IBS/Imposto Seletivo (LC 214/2025).
+ * calculadora-rtc-core — Motor de cálculo CBS/IBS/Imposto Seletivo (LC 214/2025).
  * Porte TypeScript com paridade estrita da API oficial (RFB/SERPRO).
  */
 import { Repositories } from "./db/repositories.js";

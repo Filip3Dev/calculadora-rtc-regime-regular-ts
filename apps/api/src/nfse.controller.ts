@@ -3,7 +3,7 @@
  */
 import { Body, Controller, Get, HttpCode, Post, Query } from "@nestjs/common";
 import { ApiOperation, ApiTags } from "@nestjs/swagger";
-import { JBD } from "@rtc/core";
+import { JBD } from "calculadora-rtc-core";
 import { calculadora } from "./calc.provider.js";
 import { BodyExemplo, NFSE_BASE_CALCULO, RespostaOk, RespostaProblem422 } from "./swagger-exemplos.js";
 import {
@@ -12,7 +12,7 @@ import {
   OpcaoSimplesNacional,
   RegimeApuracaoIbsCbsSN,
   formatarCTribNac,
-} from "@rtc/core";
+} from "calculadora-rtc-core";
 
 const hoje = () => new Date().toISOString().slice(0, 10);
 

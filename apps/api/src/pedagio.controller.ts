@@ -3,7 +3,7 @@
  */
 import { Body, Controller, HttpCode, Post, Res } from "@nestjs/common";
 import { ApiOperation, ApiTags } from "@nestjs/swagger";
-import { JBD } from "@rtc/core";
+import { JBD } from "calculadora-rtc-core";
 import type { Response } from "express";
 import { calculadora } from "./calc.provider.js";
 import { BodyExemplo, PEDAGIO, RespostaOk } from "./swagger-exemplos.js";

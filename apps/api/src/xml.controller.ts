@@ -3,7 +3,7 @@
  * A geração de XML (ROC → DF-e) ainda não foi portada (leiautes JAXB extensos).
  */
 import { BadRequestException, Body, Controller, Get, Header, HttpCode, Post, Query } from "@nestjs/common";
-import { gerarXml, TIPOS_GERACAO } from "@rtc/core";
+import { gerarXml, TIPOS_GERACAO } from "calculadora-rtc-core";
 import { BodyExemplo, BodyTextoXml, ROC_EXEMPLO, RespostaOk } from "./swagger-exemplos.js";
 import { ApiOperation, ApiTags } from "@nestjs/swagger";
 import {spawnSync} from "node:child_process";

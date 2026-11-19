@@ -2,6 +2,12 @@
 
 Notáveis mudanças deste projeto serão documentadas aqui. O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e o versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
+## [0.4.3] — 2026-11-19
+
+### Adicionado
+
+- **Pacote npm `calculadora-rtc-core`**: o core publicado com banco SQLite pré-gerado embutido (prepack, 5,5 MB → tarball 1,4 MB) + **CLI `calculadora-rtc`** (`calc` regime-geral, `obs` observabilidade, `xml` geração dos 7 DF-e, `versao`), testado com fixtures oficiais.
+
 ## [0.4.2] — 2026-11-19
 
 ### Adicionado

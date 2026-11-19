@@ -4,7 +4,7 @@
  */
 import { type ArgumentsHost, Catch, type ExceptionFilter, HttpException, HttpStatus, Logger } from "@nestjs/common";
 import type { Response } from "express";
-import { NegocioException } from "@rtc/core";
+import { NegocioException } from "calculadora-rtc-core";
 
 @Catch()
 export class ProblemDetailFilter implements ExceptionFilter {

@@ -3,7 +3,7 @@
  */
 import { Body, Controller, HttpCode, Post } from "@nestjs/common";
 import { ApiOperation, ApiTags } from "@nestjs/swagger";
-import { JBD, OpcaoSimplesNacional, RegimeApuracaoIbsCbsSN } from "@rtc/core";
+import { JBD, OpcaoSimplesNacional, RegimeApuracaoIbsCbsSN } from "calculadora-rtc-core";
 import { calculadora } from "./calc.provider.js";
 import { BASE_CIBS_MERCADORIAS, BASE_IS_MERCADORIAS, BASE_UNIFICADA, BASE_UNIFICADA_NFSE, BodyExemplo, RespostaOk, RespostaProblem422 } from "./swagger-exemplos.js";
 
