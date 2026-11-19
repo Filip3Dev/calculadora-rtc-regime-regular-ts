@@ -5,6 +5,9 @@ import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import { AppModule } from "./app.module.js";
 import { ProblemDetailFilter } from "./problem-detail.filter.js";
 import { calculadora } from "./calc.provider.js";
+import { createRequire } from "node:module";
+const require = createRequire(import.meta.url);
+const VERSAO_APP: string = require("../package.json").version ?? "0.0.0";
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, { logger: ["log", "warn", "error"] });
@@ -24,7 +27,7 @@ async function bootstrap(): Promise<void> {
         "do Consumo — LC 214/2025) nas operações do regime regular. Porte TypeScript com paridade " +
         "estrita de saída com a API oficial (Receita Federal/SERPRO).",
     )
-    .setVersion(process.env.npm_package_version ?? "0.3.0")
+    .setVersion(VERSAO_APP)
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup("api/swagger", app, document);
