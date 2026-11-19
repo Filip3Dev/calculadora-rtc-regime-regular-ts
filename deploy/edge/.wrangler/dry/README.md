@@ -1,1 +1,0 @@
-This folder contains the built output assets for the worker "calculadora-rtc" generated at 2026-11-19T11:48:05.914Z.
