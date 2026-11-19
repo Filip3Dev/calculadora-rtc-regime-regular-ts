@@ -6,7 +6,8 @@ Notáveis mudanças deste projeto serão documentadas aqui. O formato segue [Kee
 
 ### Adicionado
 
-- **Deploy Cloudflare** (`pnpm deploy:cloudflare`): Worker de borda em `deploy/edge/` que serve o
+- **Deploy Cloudflare** (`pnpm deploy:cloudflare`, domínio próprio **rtc.bitpag.xyz** via
+  Custom Domain no `wrangler.jsonc`): Worker de borda em `deploy/edge/` que serve o
   playground como Static Assets e proxya `/api/*` para a API em um
   [Cloudflare Container](https://developers.cloudflare.com/containers/) gerenciado por
   Durable Object (sonda de prontidão em `/api/calculadora/versao`, sleep após 10 min de

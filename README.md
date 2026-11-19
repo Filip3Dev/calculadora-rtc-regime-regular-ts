@@ -212,7 +212,9 @@ A imagem gera o banco em build, compila API/core e entrega o runtime com `xmllin
 
 Publica API + playground numa URL única (`https://calculadora-rtc.<seu-subdominio>.workers.dev`): o Worker de borda (`deploy/edge/`) serve o playground como Static Assets e proxya `/api/*` para a API rodando num [Cloudflare Container](https://developers.cloudflare.com/containers/) gerenciado por um Durable Object (start/stop, sonda de prontidão em `/api/calculadora/versao`, sleep por inatividade). O `Dockerfile` da raiz é a imagem do container — os `FROM` já são pinados em `linux/amd64`.
 
-> **Demo público**: https://calculadora-rtc.bitpag.workers.dev
+> **Demo público**: https://rtc.bitpag.xyz (também em https://calculadora-rtc.bitpag.workers.dev)
+>
+> O `routes` em `deploy/edge/wrangler.jsonc` aponta para o domínio do autor — remova ou ajuste para uma zone da sua conta antes de publicar.
 
 Pré-requisitos: conta Cloudflare com plano Workers Paid, [Docker](https://www.docker.com/products/docker-desktop/) rodando (o wrangler builda a imagem localmente) e login:
 

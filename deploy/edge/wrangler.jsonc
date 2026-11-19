@@ -6,6 +6,9 @@
   "compatibility_date": "2025-10-08",
   "compatibility_flags": ["nodejs_compat"],
 
+  // Domínio próprio (cria o registro DNS + certificado no deploy).
+  "routes": [{ "pattern": "rtc.bitpag.xyz", "custom_domain": true }],
+
   // /api/* não casa com asset algum → cai no Worker; demais caminhos 404
   // do Worker caem no fallback SPA (index.html).
   "assets": {
