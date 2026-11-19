@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Build DB + typecheck + testes (golden + e2e)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Fixtures oficiais de paridade (entradas + gabaritos) do repositório Java.
+      - name: Checkout dos fixtures do repo Java oficial
+        uses: actions/checkout@v4
+        with:
+          repository: ReceitaFederal/calculadora-rtc-regime-regular
+          sparse-checkout: src/test/resources
+          sparse-checkout-cone-mode: true
+          path: .java-fixtures
+          persist-credentials: false
+
+      - name: Instalar xmllint (validação XSD dos XMLs gerados)
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libxml2-utils
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          packageManagerFile: package.json
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Instalar dependências
+        run: pnpm install --frozen-lockfile
+
+      - name: Gerar banco SQLite (scripts SQL oficiais)
+        run: pnpm db:build
+
+      - name: Build (core + api — typecheck/e2e usam dist/ do core)
+        run: pnpm build
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      # A API sobe em background para os e2e (apps/api/test espera :8080).
+      - name: Subir API para os e2e
+        run: |
+          pnpm --filter @rtc/api start > api.log 2>&1 &
+          echo $! > api.pid
+          for i in $(seq 1 30); do
+            curl -sf -m 2 http://localhost:8080/api/calculadora/versao >/dev/null 2>&1 && break
+            sleep 1
+          done
+          curl -sf -m 5 http://localhost:8080/api/calculadora/versao
+
+      - name: Testes (49 core com golden de paridade + 17 e2e)
+        env:
+          JAVA_FIXTURES: ${{ github.workspace }}/.java-fixtures/src/test/resources
+        run: pnpm test
+
+      - name: Parar API
+        if: always()
+        run: |
+          [ -f api.pid ] && kill "$(cat api.pid)" 2>/dev/null || true
+
+      - name: Log da API (em falha)
+        if: failure()
+        run: cat api.log || true
