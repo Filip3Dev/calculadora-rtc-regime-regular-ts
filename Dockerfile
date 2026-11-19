@@ -5,8 +5,9 @@ WORKDIR /app
 RUN corepack enable
 COPY pnpm-workspace.yaml package.json ./
 COPY packages/core/package.json packages/core/
-# sem --ignore-scripts: better-sqlite3 precisa baixar/compilar o binding nativo
-# (o allowlist onlyBuiltDependencies do package.json raiz controla o que roda)
+# sem --ignore-scripts: better-sqlite3 precisa baixar/compilar o binding nativo.
+# packageManager pinado no package.json raiz (corepack entrega o mesmo pnpm do
+# host) + allowlist onlyBuiltDependencies no pnpm-workspace.yaml controlam o que roda
 RUN pnpm install --filter @rtc/core
 COPY packages/core packages/core
 COPY db/sql db/sql
