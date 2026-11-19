@@ -8,10 +8,10 @@ COPY packages/core/package.json packages/core/
 # sem --ignore-scripts: better-sqlite3 precisa baixar/compilar o binding nativo.
 # packageManager pinado no package.json raiz (corepack entrega o mesmo pnpm do
 # host) + allowlist onlyBuiltDependencies no pnpm-workspace.yaml controlam o que roda
-RUN pnpm install --filter @rtc/core
+RUN pnpm install --filter calculadora-rtc-core
 COPY packages/core packages/core
 COPY db/sql db/sql
-RUN pnpm --filter @rtc/core exec tsx scripts/build-db.ts --out /app/db/calculadora.db
+RUN pnpm --filter calculadora-rtc-core exec tsx scripts/build-db.ts --out /app/db/calculadora.db
 
 # ── Estágio 2: build da API ──────────────────────────────────────────────────
 FROM --platform=linux/amd64 node:22-slim AS build
@@ -23,7 +23,7 @@ COPY apps/playground/package.json apps/playground/
 COPY packages/core packages/core
 COPY apps/api apps/api
 RUN pnpm install --frozen-lockfile=false
-RUN pnpm --filter @rtc/core build && pnpm --filter @rtc/api build
+RUN pnpm --filter calculadora-rtc-core build && pnpm --filter @rtc/api build
 
 # ── Estágio 3: runtime (API + banco + XSDs — o front é servido pelo Worker) ──
 FROM --platform=linux/amd64 node:22-slim AS run
