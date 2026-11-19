@@ -212,6 +212,8 @@ A imagem gera o banco em build, compila API/core e entrega o runtime com `xmllin
 
 Publica API + playground numa URL única (`https://calculadora-rtc.<seu-subdominio>.workers.dev`): o Worker de borda (`deploy/edge/`) serve o playground como Static Assets e proxya `/api/*` para a API rodando num [Cloudflare Container](https://developers.cloudflare.com/containers/) gerenciado por um Durable Object (start/stop, sonda de prontidão em `/api/calculadora/versao`, sleep por inatividade). O `Dockerfile` da raiz é a imagem do container — os `FROM` já são pinados em `linux/amd64`.
 
+> **Demo público**: https://calculadora-rtc.bitpag.workers.dev
+
 Pré-requisitos: conta Cloudflare com plano Workers Paid, [Docker](https://www.docker.com/products/docker-desktop/) rodando (o wrangler builda a imagem localmente) e login:
 
 ```bash
@@ -221,7 +223,7 @@ cd deploy/edge && pnpm install && npx wrangler login && cd ../..
 Publicar (builda o playground, a imagem do container e o Worker):
 
 ```bash
-pnpm deploy
+pnpm deploy:cloudflare
 ```
 
 Comportamento: o container dorme após 10 min sem tráfego; a primeira chamada seguinte paga o boot (alguns segundos). A cobrança é por tempo de execução do container (frações de 10 ms) — ver [preços](https://developers.cloudflare.com/containers/platform/pricing/).

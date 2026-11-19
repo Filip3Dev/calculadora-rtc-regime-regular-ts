@@ -39,6 +39,8 @@ export default {
 export class CalculadoraContainer extends DurableObject {
   /** Startup compartilhado entre requests concorrentes. */
   private starting?: Promise<void>;
+  /** Container pronto (sonda passou) — evita re-sondar a cada request morna. */
+  private ready = false;
   private monitoring = false;
 
   constructor(ctx: DurableObjectState, env: Env) {
@@ -54,7 +56,14 @@ export class CalculadoraContainer extends DurableObject {
   }
 
   override async fetch(request: Request): Promise<Response> {
-    await (this.starting ??= this.start());
+    if (!this.ready) {
+      try {
+        await (this.starting ??= this.start());
+      } catch (err) {
+        this.starting = undefined; // falha libera para retry na próxima request
+        throw err;
+      }
+    }
 
     const url = new URL(request.url);
     url.protocol = "http:";
@@ -65,35 +74,41 @@ export class CalculadoraContainer extends DurableObject {
   }
 
   private async start(): Promise<void> {
+    const container = this.ctx.container!;
     try {
-      const container = this.ctx.container!;
-      container.start({
-        image: container.images.base,
-        instance: "lite",
-        enableInternet: false, // banco e XSDs vêm na imagem; nada a acessar fora
-      });
-      container.setInactivityTimeout(INACTIVITY_TIMEOUT_MS);
-      this.observeExit();
-
-      // "running" só significa que o start foi pedido — espera o HTTP responder.
-      for (let attempt = 0; attempt < 100; attempt++) {
-        try {
-          const probe = await container
-            .getTcpPort(PORT)
-            .fetch(`http://container${HEALTH_PATH}`, {
-              signal: AbortSignal.timeout(1000),
-            });
-          if (probe.ok) return;
-        } catch {
-          // porta ainda não escutando — tenta de novo em 200ms
-        }
-        await new Promise((resolve) => setTimeout(resolve, 200));
+      if (!container.running) {
+        container.start({
+          image: container.images.base,
+          instance: "lite",
+          enableInternet: false, // banco e XSDs vêm na imagem; nada a acessar fora
+        });
       }
-      throw new Error(`Container não ficou pronto na porta ${PORT} (${HEALTH_PATH})`);
-    } finally {
-      // Falha de startup libera o lock para retry na próxima request.
-      this.starting = undefined;
+    } catch (err) {
+      // Corrida após hibernação do DO: o container pode subir entre o check
+      // `running` e o start() — nesse caso segue direto para a sonda.
+      if (!/already running/i.test(String(err))) throw err;
     }
+    container.setInactivityTimeout(INACTIVITY_TIMEOUT_MS);
+    this.observeExit();
+
+    // "running" só significa que o start foi pedido — espera o HTTP responder.
+    for (let attempt = 0; attempt < 100; attempt++) {
+      try {
+        const probe = await container
+          .getTcpPort(PORT)
+          .fetch(`http://container${HEALTH_PATH}`, {
+            signal: AbortSignal.timeout(1000),
+          });
+        if (probe.ok) {
+          this.ready = true;
+          return;
+        }
+      } catch {
+        // porta ainda não escutando — tenta de novo em 200ms
+      }
+      await new Promise((resolve) => setTimeout(resolve, 200));
+    }
+    throw new Error(`Container não ficou pronto na porta ${PORT} (${HEALTH_PATH})`);
   }
 
   private observeExit(): void {
