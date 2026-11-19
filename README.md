@@ -1,6 +1,7 @@
 # Calculadora de Tributos RTC — Regime Regular (TypeScript)
 
 [![Release](https://img.shields.io/github/v/release/Filip3Dev/calculadora-rtc-regime-regular-ts?include_prereleases&sort=semver)
+[![CI](https://github.com/Filip3Dev/calculadora-rtc-regime-regular-ts/actions/workflows/ci.yml/badge.svg)](https://github.com/Filip3Dev/calculadora-rtc-regime-regular-ts/actions/workflows/ci.yml)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Node](https://img.shields.io/badge/node-%E2%89%A522-339933.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6.svg)
