@@ -7,6 +7,11 @@
 
 Porte **TypeScript** da [Calculadora de Tributos da Reforma Tributária do Consumo](https://github.com/ReceitaFederal/calculadora-rtc-regime-regular) — a API de código aberto da **Receita Federal** que calcula a **CBS**, o **IBS** e o **Imposto Seletivo** (LC 214/2025) nas operações do regime regular.
 
+> 🚀 **Teste agora — versão pública no ar:**
+> - **Front (playground):** https://rtc.bitpag.xyz
+> - **API:** `https://rtc.bitpag.xyz/api` (ex.: [`/calculadora/versao`](https://rtc.bitpag.xyz/api/calculadora/versao))
+> - **Swagger:** https://rtc.bitpag.xyz/api/swagger
+
 O motor reproduz o cálculo oficial com **paridade estrita de saída** — mesmos valores, mesmos grupos de tributação, mesma memória de cálculo (caractere a caractere) e mesmo catálogo de erros `REG`/`CAL` — comprovada por *golden tests* que executam as próprias suítes de teste do projeto original contra este motor.
 
 **Destaques deste porte:**

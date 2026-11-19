@@ -2,7 +2,7 @@
 
 Notáveis mudanças deste projeto serão documentadas aqui. O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e o versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
-## [Não publicado]
+## [0.2.1] — 2026-11-19
 
 ### Adicionado
 
