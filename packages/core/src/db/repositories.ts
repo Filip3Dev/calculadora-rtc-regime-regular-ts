@@ -682,6 +682,146 @@ export class Repositories {
     return row ? { textoCurto: row.textoCurto, memoriaCalculo: row.memoria } : null;
   }
 
+
+  // ── NFS-e: indicador de operação ──
+
+  validarCombinacaoIndicadorOperacao(nbs: string, cClassTrib: string, cIndOp: string, cTribNac: string | null, data: string): boolean {
+    const row = this.db
+      .prepare(
+        `SELECT EXISTS (
+            SELECT 1
+            FROM CLASSIF_NBS_INDOP_LC c
+            INNER JOIN CLASSIFICACAO_TRIBUTARIA ct ON c.CNIL_CLTR_ID = ct.CLTR_ID
+            INNER JOIN INDICADOR_OPERACAO_IBS_CBS io ON c.CNIL_IOIC_ID = io.IOIC_ID
+            WHERE c.CNIL_NBS_CD = :nbs
+              AND ct.CLTR_CD = :cClassTrib
+              AND io.IOIC_CD = :cIndOp
+              AND (:cTribNac IS NULL OR c.CNIL_LSLC_CD = :cTribNac)
+              AND c.CNIL_INICIO_VIGENCIA <= :data
+              AND (c.CNIL_FIM_VIGENCIA IS NULL OR c.CNIL_FIM_VIGENCIA >= :data)
+         ) AS ok`,
+      )
+      .get({ nbs, cClassTrib, cIndOp, cTribNac, data }) as { ok: number };
+    return row.ok === 1;
+  }
+
+  buscarLocalOperacaoPorIndOp(cIndOp: string, data: string): { localFornecimento: number | null; localIncidencia: number | null } | null {
+    const row = this.db
+      .prepare(
+        `SELECT io.IOIC_CD_LOCAL_FORNECIMENTO_DFE AS fornecimento, io.IOIC_CD_LOCAL_INCIDENCIA AS incidencia
+         FROM INDICADOR_OPERACAO_IBS_CBS io
+         WHERE io.IOIC_CD = :cIndOp
+           AND :data BETWEEN io.IOIC_INICIO_VIGENCIA AND COALESCE(io.IOIC_FIM_VIGENCIA, :data)`,
+      )
+      .get({ cIndOp, data }) as { fornecimento: number | null; incidencia: number | null } | undefined;
+    if (!row) return null;
+    return {
+      localFornecimento: row.fornecimento !== null ? Number(row.fornecimento) : null,
+      localIncidencia: row.incidencia !== null ? Number(row.incidencia) : null,
+    };
+  }
+
+  buscarIndicadoresOperacao(data: string, nbs: string | null): Array<{ cIndOp: string; tipoOperacao: string | null; localFornecimento: number | null; localIncidencia: number | null; prestacaoServicoOnerosa: boolean | null; adquirenteExterior: boolean | null }> {
+    const sql = nbs
+      ? `SELECT DISTINCT io.IOIC_CD AS cIndOp, io.IOIC_TIPO_OPERACAO AS tipo, io.IOIC_CD_LOCAL_FORNECIMENTO_DFE AS fornec,
+                io.IOIC_CD_LOCAL_INCIDENCIA AS incid, c.CNIL_IN_PS_ONEROSA AS onerosa, c.CNIL_IN_ADQ_EXTERIOR AS exterior
+         FROM INDICADOR_OPERACAO_IBS_CBS io
+         INNER JOIN CLASSIF_NBS_INDOP_LC c ON io.IOIC_ID = c.CNIL_IOIC_ID
+         WHERE c.CNIL_NBS_CD = :nbs
+           AND :data BETWEEN io.IOIC_INICIO_VIGENCIA AND COALESCE(io.IOIC_FIM_VIGENCIA, :data)
+           AND :data BETWEEN c.CNIL_INICIO_VIGENCIA AND COALESCE(c.CNIL_FIM_VIGENCIA, :data)
+           AND io.IOIC_TIPO_OPERACAO IS NOT NULL
+         ORDER BY io.IOIC_CD`
+      : `SELECT io.IOIC_CD AS cIndOp, io.IOIC_TIPO_OPERACAO AS tipo, io.IOIC_CD_LOCAL_FORNECIMENTO_DFE AS fornec,
+                io.IOIC_CD_LOCAL_INCIDENCIA AS incid, NULL AS onerosa, NULL AS exterior
+         FROM INDICADOR_OPERACAO_IBS_CBS io
+         WHERE io.IOIC_TIPO_OPERACAO IS NOT NULL
+           AND :data BETWEEN io.IOIC_INICIO_VIGENCIA AND COALESCE(io.IOIC_FIM_VIGENCIA, :data)
+         ORDER BY io.IOIC_CD`;
+    const rows = this.db.prepare(sql).all(nbs ? { nbs, data } : { data }) as Array<{
+      cIndOp: string; tipo: string | null; fornec: number | null; incid: number | null; onerosa: number | null; exterior: number | null;
+    }>;
+    return rows.map((r) => ({
+      cIndOp: r.cIndOp,
+      tipoOperacao: r.tipo,
+      localFornecimento: r.fornec !== null ? Number(r.fornec) : null,
+      localIncidencia: r.incid !== null ? Number(r.incid) : null,
+      prestacaoServicoOnerosa: r.onerosa !== null ? Number(r.onerosa) === 1 : null,
+      adquirenteExterior: r.exterior !== null ? Number(r.exterior) === 1 : null,
+    }));
+  }
+
+  buscarSituacoesClassificacoesPorNbs(nbs: string, data: string): Array<{ codigoSituacaoTributaria: string; descricaoSituacaoTributaria: string; codigoClassificacaoTributaria: string; descricaoClassificacaoTributaria: string }> {
+    const rows = this.db
+      .prepare(
+        `SELECT DISTINCT st.SITR_CD AS cst, st.SITR_DESCRICAO AS dst, ct.CLTR_CD AS ccl, ct.CLTR_DESCRICAO AS dcl
+         FROM CLASSIF_NBS_INDOP_LC c
+         INNER JOIN CLASSIFICACAO_TRIBUTARIA ct ON c.CNIL_CLTR_ID = ct.CLTR_ID
+         INNER JOIN SITUACAO_TRIBUTARIA st ON ct.CLTR_SITR_ID = st.SITR_ID
+         WHERE c.CNIL_NBS_CD = :nbs
+           AND :data BETWEEN c.CNIL_INICIO_VIGENCIA AND COALESCE(c.CNIL_FIM_VIGENCIA, :data)
+           AND :data BETWEEN ct.CLTR_INICIO_VIGENCIA AND COALESCE(ct.CLTR_FIM_VIGENCIA, :data)
+           AND :data BETWEEN st.SITR_INICIO_VIGENCIA AND COALESCE(st.SITR_FIM_VIGENCIA, :data)
+         ORDER BY ct.CLTR_CD, st.SITR_CD`,
+      )
+      .all({ nbs, data }) as Array<{ cst: string; dst: string; ccl: string; dcl: string }>;
+    return rows.map((r) => ({
+      codigoSituacaoTributaria: r.cst,
+      descricaoSituacaoTributaria: r.dst,
+      codigoClassificacaoTributaria: r.ccl,
+      descricaoClassificacaoTributaria: r.dcl,
+    }));
+  }
+
+  // ── Dados abertos adicionais ──
+
+  classificacoesPorCst(cst: string, idTributo: number, data: string) {
+    return this.db
+      .prepare(
+        `SELECT ct.CLTR_CD AS codigo, ct.CLTR_DESCRICAO AS descricao, ct.CLTR_TIPO_ALIQUOTA AS tipoAliquota
+         FROM CLASSIFICACAO_TRIBUTARIA ct
+         JOIN SITUACAO_TRIBUTARIA st ON ct.CLTR_SITR_ID = st.SITR_ID
+         JOIN TRIBUTO_SITUACAO_TRIBUTARIA tst ON tst.TRST_SITR_ID = st.SITR_ID
+         WHERE st.SITR_CD = :cst AND tst.TRST_TBTO_ID = :idTributo
+           AND :data BETWEEN ct.CLTR_INICIO_VIGENCIA AND COALESCE(ct.CLTR_FIM_VIGENCIA, :data)
+           AND :data BETWEEN st.SITR_INICIO_VIGENCIA AND COALESCE(st.SITR_FIM_VIGENCIA, :data)
+           AND :data BETWEEN tst.TRST_INICIO_VIGENCIA AND COALESCE(tst.TRST_FIM_VIGENCIA, :data)
+         ORDER BY ct.CLTR_CD`,
+      )
+      .all({ cst, idTributo, data });
+  }
+
+  redutoresCompraGovernamental(data: string) {
+    return this.db
+      .prepare(
+        `SELECT RCGO_VALOR AS valor, RCGO_INICIO_VIGENCIA AS inicioVigencia, RCGO_FIM_VIGENCIA AS fimVigencia
+         FROM REDUTOR_COMPRA_GOVERNAMENTAL
+         WHERE RCGO_INICIO_VIGENCIA <= :data AND (RCGO_FIM_VIGENCIA IS NULL OR RCGO_FIM_VIGENCIA >= :data)`,
+      )
+      .all({ data });
+  }
+
+  transferenciasCBS(data: string) {
+    return this.db
+      .prepare(
+        `SELECT TCEG_VALOR AS valor, TCEG_INICIO_VIGENCIA AS inicioVigencia, TCEG_FIM_VIGENCIA AS fimVigencia
+         FROM TRANSFERENCIA_CBS_ENTE_GOV
+         WHERE TCEG_INICIO_VIGENCIA <= :data AND (TCEG_FIM_VIGENCIA IS NULL OR TCEG_FIM_VIGENCIA >= :data)`,
+      )
+      .all({ data });
+  }
+
+  unidadesMedida(data: string) {
+    return this.db
+      .prepare(
+        `SELECT UNMD_SIGLA AS sigla, UNMD_NOME AS nome
+         FROM UNIDADE_MEDIDA
+         WHERE :data BETWEEN UNMD_INICIO_VIGENCIA AND COALESCE(UNMD_FIM_VIGENCIA, :data)
+         ORDER BY UNMD_SIGLA`,
+      )
+      .all({ data });
+  }
+
   // ── Versão da base ──
 
   versaoBaseDados(): { versao: string; data: string } {

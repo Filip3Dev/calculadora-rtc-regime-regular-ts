@@ -129,6 +129,82 @@ describe.skipIf(!dbOk)("API e2e", () => {
     expect(body.erros.length).toBeGreaterThan(0);
   });
 
+  it("POST /calculadora/nfse/base-calculo calcula a base NFS-e legada", async () => {
+    const res = await fetch(`${BASE}/calculadora/nfse/base-calculo`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ anoFatoGerador: 2026, valorServico: 1000, descontoIncondicional: 50, pis: 10, cofins: 20, iss: 30 }),
+    });
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ baseCalculo: "890.00" });
+  });
+
+  it("POST /calculadora/base-calculo/base-calculo-unificada-nfse (comum e locação)", async () => {
+    const comum = await fetch(`${BASE}/calculadora/base-calculo/base-calculo-unificada-nfse`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ anoFatoGerador: 2026, opSimpNac: 1, situacao: "comum", vServ: 1000, vDescIncond: 100, vISSQN: 50, vPIS: 10, vCOFINS: 20 }),
+    });
+    expect(await comum.json()).toMatchObject({ baseRG: "820.00", baseSN: null });
+
+    const loc = await fetch(`${BASE}/calculadora/base-calculo/base-calculo-unificada-nfse`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        anoFatoGerador: 2026, opSimpNac: 1, situacao: "locacao9903",
+        locacao: { pCopropriedade: 50, vTotOper: 1000, vDescIncondTot: 0, somaAjustesLocImoveis: 0 },
+      }),
+    });
+    expect(await loc.json()).toMatchObject({ baseRG: "500.00" });
+  });
+
+  it("POST /calculadora/pedagio distribui CBS/IBS por praça (proporcional à extensão)", async () => {
+    const res = await fetch(`${BASE}/calculadora/pedagio`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        dataHoraEmissao: "2026-06-01T08:00:00-03:00",
+        codigoMunicipioOrigem: 4314902, ufMunicipioOrigem: "RS",
+        cst: "000", cClassTrib: "000001", baseCalculo: 100, extensaoTotal: 100,
+        trechos: [
+          { numero: 1, municipio: 4314902, uf: "RS", extensao: 60 },
+          { numero: 2, municipio: 4205407, uf: "SC", extensao: 40 },
+        ],
+      }),
+    });
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    // CBS referência 0,9%: trecho 1 (60%) → alíquota efetiva 0,54% → 0,54 sobre BC 100
+    expect(body.trechos[0].cbs).toEqual({ aliquota: "0.90", aliquotaEfetiva: "0.54", tributoCalculado: "0.54" });
+    expect(body.trechos[1].cbs.aliquotaEfetiva).toBe("0.36");
+    expect(body.total.cbsTotal.valorTributo).toBe("0.90"); // 0.54 + 0.36
+  });
+
+  it("GET /calculadora/nfse/indicador-operacao e local-operacao respondem", async () => {
+    const inds = await (await fetch(`${BASE}/calculadora/nfse/indicador-operacao?data=2026-06-01`)).json();
+    expect(Array.isArray(inds)).toBe(true);
+    expect(inds.length).toBeGreaterThan(0);
+    const local = await (
+      await fetch(`${BASE}/calculadora/nfse/local-operacao?cIndOp=${inds[0].cIndOp}&data=2026-06-01`)
+    ).json();
+    expect(local.cIndOp).toBe(inds[0].cIndOp);
+    expect(local).toHaveProperty("codigoLocalFornecimento");
+  });
+
+  it("GET /calculadora/nfse/locais-fornecimento traz o catálogo (28 locais)", async () => {
+    const locais = await (await fetch(`${BASE}/calculadora/nfse/locais-fornecimento`)).json();
+    expect(locais.length).toBe(28);
+  });
+
+  it("GET /calculadora/dados-abertos novos endpoints (transferências, redutores, unidades)", async () => {
+    const transf = await (await fetch(`${BASE}/calculadora/dados-abertos/transferencias-cbs?data=2027-06-01`)).json();
+    expect(transf[0]).toMatchObject({ valor: 0, inicioVigencia: "2026-01-01", fimVigencia: "2028-12-31" });
+    const red = await (await fetch(`${BASE}/calculadora/dados-abertos/redutores-compra-governamental?data=2026-06-01`)).json();
+    expect(red.length).toBeGreaterThan(0);
+    const um = await (await fetch(`${BASE}/calculadora/dados-abertos/unidades-medida?data=2026-06-01`)).json();
+    expect(um.length).toBeGreaterThan(0);
+  });
+
   it("GET /calculadora/observabilidade/erros consulta o catálogo", async () => {
     const body = await (await fetch(`${BASE}/calculadora/observabilidade/erros?codigo=REG-002`)).json();
     expect(body.codigo).toBe("REG-002");

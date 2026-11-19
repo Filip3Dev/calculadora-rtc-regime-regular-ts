@@ -3,9 +3,11 @@ import { CalculadoraController } from "./calculadora.controller.js";
 import { BaseCalculoController } from "./base-calculo.controller.js";
 import { DadosAbertosController } from "./dados-abertos.controller.js";
 import { XmlController } from "./xml.controller.js";
+import { NfseController } from "./nfse.controller.js";
+import { PedagioController } from "./pedagio.controller.js";
 import { ProblemDetailFilter } from "./problem-detail.filter.js";
 
 @Module({
-  controllers: [CalculadoraController, BaseCalculoController, DadosAbertosController, XmlController],
+  controllers: [CalculadoraController, BaseCalculoController, DadosAbertosController, XmlController, NfseController, PedagioController],
 })
 export class AppModule {}

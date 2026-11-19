@@ -142,6 +142,53 @@ export class DadosAbertosService {
       .all({ data });
   }
 
+  classificacoesPorCst(cst: string, idTributo: number, data: string) {
+    return (this.db as Database.Database)
+      .prepare(
+        `SELECT ct.CLTR_CD AS codigo, ct.CLTR_DESCRICAO AS descricao, ct.CLTR_TIPO_ALIQUOTA AS tipoAliquota
+         FROM CLASSIFICACAO_TRIBUTARIA ct
+         JOIN SITUACAO_TRIBUTARIA st ON ct.CLTR_SITR_ID = st.SITR_ID
+         JOIN TRIBUTO_SITUACAO_TRIBUTARIA tst ON tst.TRST_SITR_ID = st.SITR_ID
+         WHERE st.SITR_CD = :cst AND tst.TRST_TBTO_ID = :idTributo
+           AND :data BETWEEN ct.CLTR_INICIO_VIGENCIA AND COALESCE(ct.CLTR_FIM_VIGENCIA, :data)
+           AND :data BETWEEN st.SITR_INICIO_VIGENCIA AND COALESCE(st.SITR_FIM_VIGENCIA, :data)
+           AND :data BETWEEN tst.TRST_INICIO_VIGENCIA AND COALESCE(tst.TRST_FIM_VIGENCIA, :data)
+         ORDER BY ct.CLTR_CD`,
+      )
+      .all({ cst, idTributo, data });
+  }
+
+  redutoresCompraGov(data: string) {
+    return this.db
+      .prepare(
+        `SELECT RCGO_VALOR AS valor, RCGO_INICIO_VIGENCIA AS inicioVigencia, RCGO_FIM_VIGENCIA AS fimVigencia
+         FROM REDUTOR_COMPRA_GOVERNAMENTAL
+         WHERE RCGO_INICIO_VIGENCIA <= :data AND (RCGO_FIM_VIGENCIA IS NULL OR RCGO_FIM_VIGENCIA >= :data)`,
+      )
+      .all({ data });
+  }
+
+  transferenciasCBS(data: string) {
+    return this.db
+      .prepare(
+        `SELECT TCEG_VALOR AS valor, TCEG_INICIO_VIGENCIA AS inicioVigencia, TCEG_FIM_VIGENCIA AS fimVigencia
+         FROM TRANSFERENCIA_CBS_ENTE_GOV
+         WHERE TCEG_INICIO_VIGENCIA <= :data AND (TCEG_FIM_VIGENCIA IS NULL OR TCEG_FIM_VIGENCIA >= :data)`,
+      )
+      .all({ data });
+  }
+
+  unidadesMedida(data: string) {
+    return this.db
+      .prepare(
+        `SELECT UNMD_SIGLA AS sigla, UNMD_NOME AS nome
+         FROM UNIDADE_MEDIDA
+         WHERE :data BETWEEN UNMD_INICIO_VIGENCIA AND COALESCE(UNMD_FIM_VIGENCIA, :data)
+         ORDER BY UNMD_SIGLA`,
+      )
+      .all({ data });
+  }
+
   tiposDfe(data: string) {
     return this.db
       .prepare(

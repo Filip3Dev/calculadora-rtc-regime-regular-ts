@@ -39,6 +39,15 @@ import {
   type ErroDetalhe,
 } from "./services/orquestracao.js";
 import { criarTotais } from "./services/totais.js";
+import {
+  BaseCalculoUnificadaNfseService,
+  NfseService,
+  type BaseCalculoUnificadaNfseInput,
+  type BaseCalculoUnificadaNfseOutput,
+  type NfseBaseCalculoInput,
+  type NfseValidacaoIndicadorOperacaoInput,
+} from "./services/nfse.js";
+import { PedagioService, type PedagioInput } from "./services/pedagio.js";
 import { parseComponentes, parseOperacao } from "./validation.js";
 import { ErroGenericoValidacaoException } from "./errors.js";
 import { objetoJson, serializarOper, serializarROC, totaisJson } from "./serialize.js";
@@ -57,6 +66,9 @@ export class Calculadora {
   readonly calculadoraService: CalculadoraService;
   readonly observabilidadeService: ObservabilidadeService;
   readonly baseCalculoUnificadaService: BaseCalculoUnificadaService;
+  readonly nfseService: NfseService;
+  readonly baseCalculoUnificadaNfseService: BaseCalculoUnificadaNfseService;
+  readonly pedagioService: PedagioService;
 
   private constructor(dbPath: string, opts: Required<CalculadoraOptions>) {
     this.repos = new Repositories(dbPath);
@@ -148,6 +160,12 @@ export class Calculadora {
       criarTotais,
     );
     this.baseCalculoUnificadaService = baseCalculoUnificadaService;
+    this.nfseService = new NfseService(this.repos);
+    this.baseCalculoUnificadaNfseService = new BaseCalculoUnificadaNfseService();
+    this.pedagioService = new PedagioService(aliquotaPadraoService, ufService, municipioService);
+    this.nfseService = new NfseService(this.repos);
+    this.baseCalculoUnificadaNfseService = new BaseCalculoUnificadaNfseService();
+    this.pedagioService = new PedagioService(aliquotaPadraoService, ufService, municipioService);
   }
 
   static create(dbPath: string, opts: CalculadoraOptions = {}): Calculadora {
@@ -193,6 +211,21 @@ export class Calculadora {
       baseSN: r.baseSN.toPlainString(),
       avisos: r.avisos,
     };
+  }
+
+  /** POST /calculadora/nfse/base-calculo — base de cálculo NFS-e legada. */
+  calcularNfseBaseCalculo(input: NfseBaseCalculoInput): Record<string, unknown> {
+    return this.nfseService.calcularBaseCalculo(input);
+  }
+
+  /** POST /calculadora/base-calculo/base-calculo-unificada-nfse. */
+  calcularNfseBaseUnificada(input: BaseCalculoUnificadaNfseInput): BaseCalculoUnificadaNfseOutput {
+    return this.baseCalculoUnificadaNfseService.calcular(input);
+  }
+
+  /** POST /calculadora/pedagio — CBS/IBS por praça. */
+  calcularPedagio(input: PedagioInput): Record<string, unknown> {
+    return this.pedagioService.calcularCIBS(input);
   }
 
   versaoBase(): { versao: string; data: string } {
@@ -245,4 +278,18 @@ export * from "./model/jbd.js";
 export * from "./errors.js";
 export type { OperacaoJson, ItemOperacaoJson } from "./model/types.js";
 export { CATALOGO_ERROS } from "./errors.js";
+export {
+  LOCAIS_FORNECIMENTO,
+  LOCAIS_INCIDENCIA,
+  OpcaoSimplesNacional,
+  RegimeApuracaoIbsCbsSN,
+  formatarCTribNac,
+  tipoAjusteNfse,
+} from "./services/nfse.js";
+export type {
+  SituacaoOperacaoNfse,
+  BaseCalculoUnificadaNfseInput,
+  NfseBaseCalculoInput,
+} from "./services/nfse.js";
+export type { PedagioInput } from "./services/pedagio.js";
 export { objetoJson } from "./serialize.js";

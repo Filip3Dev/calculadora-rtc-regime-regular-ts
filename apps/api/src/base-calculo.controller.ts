@@ -3,6 +3,7 @@
  */
 import { Body, Controller, HttpCode, Post } from "@nestjs/common";
 import { ApiOperation, ApiTags } from "@nestjs/swagger";
+import { JBD, OpcaoSimplesNacional, RegimeApuracaoIbsCbsSN } from "@rtc/core";
 import { calculadora } from "./calc.provider.js";
 
 interface BaseCalculoUnificadaRequest {
@@ -25,5 +26,49 @@ export class BaseCalculoController {
       natureza: req.natureza ?? null,
       tpDoc: req.tipoDocumento,
     });
+  }
+
+  /** POST /api/calculadora/base-calculo/base-calculo-unificada-nfse */
+  @Post("base-calculo-unificada-nfse")
+  @HttpCode(200)
+  @ApiOperation({ summary: "Bases unificadas RG e SN da NFS-e (MEI, locação 99.03, salão/profissional parceiro, documentos de ajuste)" })
+  baseCalculoUnificadaNfse(@Body() req: {
+      anoFatoGerador: number;
+      opSimpNac: number;
+      situacao: "comum" | "salaoParceiro" | "locacao9903";
+      vServ?: number | string | null;
+      vDescIncond?: number | string | null;
+      vISSQN?: number | string | null;
+      vPIS?: number | string | null;
+      vCOFINS?: number | string | null;
+      regApIBSCBSSN?: number | null;
+      documentos?: Array<{ tpAjusteBC: string; vAjusteAplic: number | string; xTpAjusteBC?: string | null }> | null;
+      locacao?: { pCopropriedade: number | string; vTotOper: number | string; vDescIncondTot: number | string; somaAjustesLocImoveis: number | string } | null;
+    },
+  ) {
+    return calculadora().calcularNfseBaseUnificada({
+      anoFatoGerador: req.anoFatoGerador,
+      opSimpNac: req.opSimpNac as OpcaoSimplesNacional,
+      situacao: req.situacao,
+      vServ: JBD.of(req.vServ ?? null),
+      vDescIncond: JBD.of(req.vDescIncond ?? null),
+      vISSQN: JBD.of(req.vISSQN ?? null),
+      vPIS: JBD.of(req.vPIS ?? null),
+      vCOFINS: JBD.of(req.vCOFINS ?? null),
+      regApIBSCBSSN: (req.regApIBSCBSSN ?? null) as RegimeApuracaoIbsCbsSN | null,
+      documentos: (req.documentos ?? null)?.map((d) => ({
+        tpAjusteBC: d.tpAjusteBC,
+        vAjusteAplic: JBD.of(d.vAjusteAplic)!,
+        xTpAjusteBC: d.xTpAjusteBC ?? null,
+      })) ?? null,
+      locacao: req.locacao
+        ? {
+            pCopropriedade: JBD.of(req.locacao.pCopropriedade)!,
+            vTotOper: JBD.of(req.locacao.vTotOper)!,
+            vDescIncondTot: JBD.of(req.locacao.vDescIncondTot)!,
+            somaAjustesLocImoveis: JBD.of(req.locacao.somaAjustesLocImoveis)!,
+          }
+        : null,
+    }) as unknown as Record<string, unknown>;
   }
 }

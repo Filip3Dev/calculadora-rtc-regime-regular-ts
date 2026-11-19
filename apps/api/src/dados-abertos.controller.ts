@@ -83,4 +83,35 @@ export class DadosAbertosController {
   tiposDocumento(@Query("data") data?: string) {
     return DADOS_ABERTOS.tiposDfe(data ?? hoje());
   }
+
+
+  @Get("classificacoes-tributarias/cbs-ibs/:cst")
+  @ApiOperation({ summary: "Classificações tributárias (CBS e IBS) aplicáveis a uma CST" })
+  classificacoesPorCstCbsIbs(@Query("cst") cst: string, @Query("data") data?: string) {
+    return DADOS_ABERTOS.classificacoesPorCst(cst, 2, data ?? hoje());
+  }
+
+  @Get("classificacoes-tributarias/imposto-seletivo/:cst")
+  @ApiOperation({ summary: "Classificações tributárias (Imposto Seletivo) aplicáveis a uma CST" })
+  classificacoesPorCstIs(@Query("cst") cst: string, @Query("data") data?: string) {
+    return DADOS_ABERTOS.classificacoesPorCst(cst, 1, data ?? hoje());
+  }
+
+  @Get("redutores-compra-governamental")
+  @ApiOperation({ summary: "Redutores de compra governamental vigentes" })
+  redutoresCompraGov(@Query("data") data?: string) {
+    return DADOS_ABERTOS.redutoresCompraGov(data ?? hoje());
+  }
+
+  @Get("transferencias-cbs")
+  @ApiOperation({ summary: "Percentuais de transferência de CBS entre entes federativos" })
+  transferenciasCBS(@Query("data") data?: string) {
+    return DADOS_ABERTOS.transferenciasCBS(data ?? hoje());
+  }
+
+  @Get("unidades-medida")
+  @ApiOperation({ summary: "Unidades de medida vigentes" })
+  unidadesMedida(@Query("data") data?: string) {
+    return DADOS_ABERTOS.unidadesMedida(data ?? hoje());
+  }
 }
