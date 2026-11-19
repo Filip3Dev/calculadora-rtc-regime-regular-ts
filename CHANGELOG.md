@@ -2,6 +2,16 @@
 
 Notáveis mudanças deste projeto serão documentadas aqui. O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e o versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
+## [0.4.2] — 2026-11-19
+
+### Adicionado
+
+- **Upstream tracking**: workflow diário (09:00 BRT) vigia o repositório oficial
+  (tags/commits/migrações Flyway) — movimento abre issue automática (label `upstream`)
+  com diff e passos de sincronização; migrações novas geram **PR automático** com os
+  SQLs para o CI validar. Probe do piloto oficial reporta dados da nuvem ainda não
+  publicados (hoje: V0073 vs V0059 público).
+
 ## [0.4.1] — 2026-11-19
 
 ### Adicionado

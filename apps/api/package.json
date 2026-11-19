@@ -1,6 +1,6 @@
 {
   "name": "@rtc/api",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "API REST da Calculadora RTC (LC 214/2025) — NestJS sobre o motor @rtc/core",
   "private": true,
   "type": "module",
