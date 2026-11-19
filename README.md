@@ -366,6 +366,11 @@ Estrutura de pacotes inspirada na organização do projeto original (`api` → `
 - [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/)
 - [Semantic Versioning](https://semver.org/lang/pt-BR/)
 
+
+## Upstream tracking
+
+O workflow [Upstream Tracking](.github/workflows/upstream-tracking.yml) roda diariamente (09:00 BRT) e vigia os repositórios oficiais da Receita Federal: quando há movimento (tag/commits/migrações Flyway novas), abre uma issue (label \`upstream\`) com o diff e os passos de sincronização — e, quando há migrações novas, um **PR automático** com os SQLs para o CI validar (banco + golden). O estado da última sincronização vive em \`.upstream/state.json\`; o probe do piloto oficial (nuvem) também reporta dados ainda não publicados no GitHub.
+
 ## Licença
 
 Este projeto é distribuído sob a licença [MIT](LICENSE), incluindo atribuição aos componentes originais da Receita Federal do Brasil e do SERPRO.

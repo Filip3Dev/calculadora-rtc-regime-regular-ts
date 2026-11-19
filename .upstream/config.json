@@ -1,0 +1,15 @@
+{
+  "watch": [
+    {
+      "repo": "ReceitaFederal/calculadora-rtc-regime-regular",
+      "flyway": "flyway/sql/manutencao"
+    }
+  ],
+  "piloto": "https://piloto-cbs.tributos.gov.br/servico/calculadora-consumo/api/calculadora/dados-abertos/versao",
+  "syncSteps": [
+    "Se houver PR automático de migrações: conferir os SQLs novos e aguardar o CI (db:build + golden com fixtures oficiais via JAVA_FIXTURES)",
+    "Se o CI quebrar: ajustar o porte (motores/serializers) — os goldens apontam a divergência",
+    "Merge → atualizar CHANGELOG → release → `pnpm deploy:cloudflare` (bump INSTANCE_NAME se o runtime mudar)",
+    "Sem migrações, mas com código novo no oficial: revisar diff (https://github.com/ReceitaFederal/calculadora-rtc-regime-regular/compare/<sha-anterior>...<sha-novo>) e portar o que afeta o contrato"
+  ]
+}
