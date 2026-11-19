@@ -2,6 +2,7 @@
 
 [![Release](https://img.shields.io/github/v/release/Filip3Dev/calculadora-rtc-regime-regular-ts?include_prereleases&sort=semver)
 [![CI](https://github.com/Filip3Dev/calculadora-rtc-regime-regular-ts/actions/workflows/ci.yml/badge.svg)](https://github.com/Filip3Dev/calculadora-rtc-regime-regular-ts/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/calculadora-rtc-core?color=339933&label=npm%20%calculadora-rtc-core)](https://www.npmjs.com/package/calculadora-rtc-core)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Node](https://img.shields.io/badge/node-%E2%89%A522-339933.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6.svg)
@@ -366,6 +367,18 @@ Estrutura de pacotes inspirada na organização do projeto original (`api` → `
 - [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/)
 - [Semantic Versioning](https://semver.org/lang/pt-BR/)
 
+
+
+## Pacote npm
+
+O motor também é distribuído como pacote npm pronto para uso (**sem servidor**), com banco de dados embutido e CLI:
+
+```bash
+npm i calculadora-rtc-core
+npx calculadora-rtc-core --help   # CLI do pacote
+```
+
+Detalhes e exemplos: [README do pacote](packages/core/README.md) · [npmjs.com/package/calculadora-rtc-core](https://www.npmjs.com/package/calculadora-rtc-core)
 
 ## Upstream tracking
 

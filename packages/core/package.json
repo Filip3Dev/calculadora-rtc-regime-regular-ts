@@ -1,7 +1,7 @@
 {
   "name": "calculadora-rtc-core",
-  "version": "0.4.3",
-  "description": "Motor de cálculo CBS/IBS/Imposto Seletivo da Reforma Tributária (LC 214/2025) — porte TypeScript com paridade estrita com a API oficial da Receita Federal. Inclui banco SQLite pré-gerado e CLI.",
+  "version": "0.4.4",
+  "description": "Motor de cálculo da Reforma Tributária (CBS, IBS e Imposto Seletivo — LC 214/2025). Porte TS da API oficial da Receita Federal, com banco de dados embutido e CLI. Paridade verificada por golden tests.",
   "license": "MIT",
   "type": "module",
   "main": "dist/index.js",
@@ -26,14 +26,16 @@
     "vitest": "^3.0.0"
   },
   "keywords": [
-    "receita-federal",
     "reforma-tributaria",
     "cbs",
     "ibs",
     "imposto-seletivo",
+    "receita-federal",
     "lc214",
     "tributos",
-    "calculadora"
+    "fiscal",
+    "nf-e",
+    "sefaz"
   ],
   "bin": {
     "calculadora-rtc": "dist/cli.js"
