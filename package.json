@@ -1,0 +1,36 @@
+{
+  "name": "calculadora-rtc-ts",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Porte TypeScript da Calculadora de Tributos da RTC (LC 214/2025) — API NestJS + playground, paridade estrita com a API oficial da Receita Federal",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "pnpm --filter @rtc/core build && pnpm --filter @rtc/api build",
+    "test": "pnpm -r test",
+    "db:build": "tsx packages/core/scripts/build-db.ts",
+    "dev:api": "pnpm --filter @rtc/api dev",
+    "dev:web": "pnpm --filter @rtc/playground dev",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.9.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "better-sqlite3"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Filip3Dev/calculadora-rtc-ts.git"
+  },
+  "homepage": "https://github.com/Filip3Dev/calculadora-rtc-ts#readme",
+  "bugs": {
+    "url": "https://github.com/Filip3Dev/calculadora-rtc-ts/issues"
+  },
+  "author": "Filip3Dev"
+}
