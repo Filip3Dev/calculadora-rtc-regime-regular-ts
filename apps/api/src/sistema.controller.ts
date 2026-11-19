@@ -5,9 +5,26 @@
 import { Controller, Get, HttpCode, NotFoundException, Query, Res } from "@nestjs/common";
 import { ApiOperation, ApiTags } from "@nestjs/swagger";
 import type { Response } from "express";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { calculadora } from "./calc.provider.js";
 
-const APP_VERSION = process.env.npm_package_version ?? "0.2.0";
+/**
+ * Versão da aplicação lida do package.json no RUNTIME — funciona em dev
+ * (tsx) e no container (node dist/main.js, onde npm_package_version não
+ * existe e o fallback antigo "0.2.0" fazia o /versao/status mentir em
+ * produção). dist/main.js → ../package.json = apps/api/package.json
+ * (copiado no Dockerfile).
+ */
+const APP_VERSION: string = (() => {
+  try {
+    return JSON.parse(
+      readFileSync(new URL("../package.json", import.meta.url), "utf8"),
+    ).version as string;
+  } catch {
+    return process.env.npm_package_version ?? "0.0.0";
+  }
+})();
 
 @ApiTags("sistema")
 @Controller()
