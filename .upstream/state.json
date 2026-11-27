@@ -1,10 +1,10 @@
 {
   "repos": {
     "ReceitaFederal/calculadora-rtc-regime-regular": {
-      "tag": "1.6.1",
-      "release": "1.6.1",
-      "sha": "150cccbe41",
-      "migration": "V0059"
+      "tag": "1.7.3",
+      "release": "1.7.3",
+      "sha": "0d4b073da9",
+      "migration": "V0074"
     }
   }
 }
